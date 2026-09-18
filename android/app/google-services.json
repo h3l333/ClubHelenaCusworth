@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "21035806320",
+    "project_id": "sports-club-b4f12",
+    "storage_bucket": "sports-club-b4f12.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:21035806320:android:98f8c13b162ba7a1638eb5",
+        "android_client_info": {
+          "package_name": "com.example.sports_club"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjK_8UFdo_8jQ36_pR9PD21Wvh2dEFj8Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
