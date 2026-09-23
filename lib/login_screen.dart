@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'services/api_client.dart';
+
 // En Dart, una clase enum es una clase especial que se usa para
 // representar una cantidad fija de valores ctes.
 enum _AuthStage { welcome, login, register }
@@ -43,4 +45,70 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _googleSignIn = GoogleSignIn.instance;
   bool _googleSignInInitialized = false;
+
+  // dispose() se llama sobre un State cuando su elemento asociado es quitado permanentemente del arbol de elementos.
+  // Un elemento podría ser quitado del árbol de elementos, por ejemplo:
+  //  - Cuando el usuario navega a otra pantalla.
+  //  - Cuando su elemento padre lo reemplaza con otro.
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _birthDateController.dispose();
+    _dniController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final isRegistering = _stage == _AuthStage.register;
+    final formKey = isRegistering ? _registerFormKey : _loginFormKey;
+    if (!formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    try {
+      if (isRegistering) {
+        final credential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+        try {
+          // Guarda el perfil en Postgres via el backend. Espera birthDate como YYYY-MM-DD.
+          await ApiClient.instance.createUser(
+            firstName: _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim(),
+            birthDate: DateTime.parse(_birthDateController.text.trim()),
+            dni: _dniController.text.trim(),
+          );
+        } catch (e) {
+          // Sin perfil en la base, se elimina la cuenta de Firebase para permitir reintentar el registro.
+          await credential.user?.delete();
+          rethrow;
+        }
+      } else {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      }
+    } on ApiException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } on FormatException {
+      setState(() => _errorMessage = 'Fecha de nacimiento invalida (use AAAA-MM-DD).');
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage =
+            e.message ?? 'Error al autenticar. Vuelva a intentar por favor.';
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false); // "Si este estado aun está en el árbol de estados, indica que no se está cargando."
+    }
+  }
 }
