@@ -46,3 +46,13 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Backend
+backend/.venv/
+backend/.env
+__pycache__/
+.pytest_cache/
+
+# Firebase Admin service account keys
+*-firebase-adminsdk-*.json
+serviceAccount.json
