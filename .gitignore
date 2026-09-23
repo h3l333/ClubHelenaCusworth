@@ -55,4 +55,4 @@ __pycache__/
 
 # Firebase Admin service account keys
 *-firebase-adminsdk-*.json
-serviceAccount.json
+serviceAccount*.json
