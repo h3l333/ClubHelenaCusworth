@@ -29,6 +29,8 @@ tp_2026_consigna.txt
 .pub/
 **/build/
 /coverage/
+**/generated_plugin_registrant.*
+**/generated_plugins.cmake
 
 # Symbolication related
 app.*.symbols
