@@ -11,17 +11,14 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+NOTAS.md
+tp_2026_consigna.txt
 
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -30,7 +27,7 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
+**/build/
 /coverage/
 
 # Symbolication related
@@ -48,10 +45,20 @@ app.*.map.json
 .widget_preview/
 
 # Backend
-backend/.venv/
-backend/.env
+.venv/
+venv/
+.env
+.env.*
+!.env.example
 __pycache__/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.sqlite
+*.sqlite3
+*.db
 
 # Firebase Admin service account keys
 *-firebase-adminsdk-*.json
