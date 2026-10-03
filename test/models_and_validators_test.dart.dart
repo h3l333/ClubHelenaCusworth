@@ -1,0 +1,104 @@
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:sports_club/date_utils.dart';
+import 'package:sports_club/reserva.dart';
+import 'package:sports_club/sede.dart';
+import 'package:sports_club/user_profile.dart';
+
+void main() {
+  group('parseBirthDate', () {
+    test('parses DD/MM/AAAA', () {
+      expect(parseBirthDate('12/04/1990'), DateTime(1990, 4, 12));
+    });
+
+    test('rejects out-of-range and malformed dates', () {
+      expect(() => parseBirthDate('31/02/1990'), throwsFormatException);
+      expect(() => parseBirthDate('1990-04-12'), throwsFormatException);
+      expect(() => parseBirthDate('aa/bb/cccc'), throwsFormatException);
+    });
+  });
+
+  group('validators', () {
+    test('birth date must be past and formatted', () {
+      expect(validateBirthDate('12/04/1990'), isNull);
+      expect(validateBirthDate('12/04/2999'), isNotNull);
+      expect(validateBirthDate(''), isNotNull);
+    });
+
+    test('dni accepts dots and 6-10 digits', () {
+      expect(validateDni('30.123.456'), isNull);
+      expect(validateDni('123'), isNotNull);
+      expect(validateDni('abc'), isNotNull);
+    });
+
+    test('formatDni adds thousands separators', () {
+      expect(formatDni('30123456'), '30.123.456');
+    });
+  });
+
+  test('toIsoDate pads month and day', () {
+    expect(toIsoDate(DateTime(2026, 3, 5)), '2026-03-05');
+  });
+
+  test('UserProfile.fromJson', () {
+    final p = UserProfile.fromJson({
+      'id': 1,
+      'email': 'a@b.com',
+      'first_name': 'Juan',
+      'last_name': 'Perez',
+      'birth_date': '1990-04-12',
+      'dni': '30123456',
+    });
+    expect(p.fullName, 'Juan Perez');
+    expect(p.initials, 'JP');
+    expect(p.birthDateLabel, '12/04/1990');
+  });
+
+  test('Sede.fromJson with canchas', () {
+    final s = Sede.fromJson({
+      'id': 1,
+      'name': 'Sede Norte',
+      'localidad': 'Norte',
+      'address': 'Av. 1',
+      'header_image': null,
+      'sports': ['Futbol'],
+      'canchas': [
+        {
+          'id': 3,
+          'name': 'Cancha 1',
+          'sport': 'Futbol',
+          'subtype': 'Futbol 5',
+          'price': 8000.0,
+          'features': ['Outdoor'],
+          'image': null,
+        },
+      ],
+    });
+    expect(s.canchas.single.label, 'Cancha 1 - Futbol 5');
+    expect(s.canchas.single.resolvedImage, contains('futbol'));
+  });
+
+  test('Reserva state', () {
+    Map<String, dynamic> json(String fecha, String estado) => {
+      'id': 1,
+      'cancha_id': 1,
+      'cancha': 'Cancha 1 - Futbol 5',
+      'sede': 'Sede Norte',
+      'fecha': fecha,
+      'hora': '18:00',
+      'price': 8000,
+      'estado': estado,
+    };
+    final future = DateTime.now().add(const Duration(days: 3));
+    final futureIso = toIsoDate(future);
+    expect(Reserva.fromJson(json(futureIso, 'confirmada')).isActive, isTrue);
+    expect(
+      Reserva.fromJson(json(futureIso, 'cancelada')).estadoLabel,
+      'Cancelada',
+    );
+    expect(
+      Reserva.fromJson(json('2020-01-01', 'confirmada')).estadoLabel,
+      'Finalizada',
+    );
+  });
+}

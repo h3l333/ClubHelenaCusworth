@@ -1,6 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'date_utils.dart';
+import 'services/api_client.dart';
+import 'services/profile_store.dart';
+import 'user_profile.dart';
+import 'widgets/common.dart';
+
 class PerfilEdit extends StatefulWidget {
   const PerfilEdit({super.key});
 
@@ -9,22 +15,40 @@ class PerfilEdit extends StatefulWidget {
 }
 
 class _PerfilEditState extends State<PerfilEdit> {
-  static const _fullName = 'Carlos García';
-  static const _email = 'carlos@sportsclub.com';
-
-  final _nombreController = TextEditingController(text: 'Carlos');
-  final _apellidoController = TextEditingController(text: 'García');
-  final _dniController = TextEditingController(text: '31.234.567');
-  final _fechaController = TextEditingController(text: '1990-05-15');
-  final _emailController = TextEditingController(text: _email);
+  final _store = ProfileStore.instance;
+  late final TextEditingController _nombreController;
+  late final TextEditingController _apellidoController;
+  late final TextEditingController _dniController;
+  late final TextEditingController _fechaController;
+  late final TextEditingController _emailController;
 
   bool _editing = false;
+  bool _saving = false;
 
-  String get _initials {
-    final parts = _fullName.trim().split(RegExp(r'\s+'));
-    final first = parts.isNotEmpty ? parts.first[0] : '';
-    final last = parts.length > 1 ? parts.last[0] : '';
-    return (first + last).toUpperCase();
+  UserProfile get _profile => _store.profile!;
+  String get _email =>
+      FirebaseAuth.instance.currentUser?.email ?? _profile.email;
+  String get _fullName => _profile.fullName;
+  String get _initials => _profile.initials;
+
+  @override
+  void initState() {
+    super.initState();
+    _nombreController = TextEditingController();
+    _apellidoController = TextEditingController();
+    _dniController = TextEditingController();
+    _fechaController = TextEditingController();
+    _emailController = TextEditingController(text: _email);
+    _fillFromProfile();
+  }
+
+  void _fillFromProfile() {
+    _nombreController.text = _profile.firstName;
+    _apellidoController.text = _profile.lastName;
+    _dniController.text = formatDni(_profile.dni);
+    _fechaController.text = _profile.birthDate == null
+        ? ''
+        : formatDate(_profile.birthDate!);
   }
 
   @override
@@ -37,11 +61,42 @@ class _PerfilEditState extends State<PerfilEdit> {
     super.dispose();
   }
 
-  void _toggleEditing() {
-    setState(() => _editing = !_editing);
+  Future<void> _toggleEditing() async {
+    if (_saving) return;
     if (!_editing) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Perfil actualizado')));
+      setState(() => _editing = true);
+      return;
+    }
+    final error =
+        (_nombreController.text.trim().isEmpty
+            ? 'El nombre es requerido.'
+            : null) ??
+        (_apellidoController.text.trim().isEmpty
+            ? 'El apellido es requerido.'
+            : null) ??
+        validateDni(_dniController.text) ??
+        validateBirthDate(_fechaController.text);
+    if (error != null) {
+      showSnack(context, error);
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final updated = await ApiClient.instance.updateMe(
+        firstName: _nombreController.text.trim(),
+        lastName: _apellidoController.text.trim(),
+        birthDate: parseBirthDate(_fechaController.text),
+        dni: _dniController.text.trim(),
+      );
+      _store.setProfile(updated);
+      if (!mounted) return;
+      _fillFromProfile();
+      setState(() => _editing = false);
+      showSnack(context, 'Perfil actualizado');
+    } on ApiException catch (e) {
+      if (mounted) showSnack(context, e.message);
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -55,7 +110,7 @@ class _PerfilEditState extends State<PerfilEdit> {
       builder: (context) => AlertDialog(
         title: const Text('Eliminar cuenta'),
         content: const Text(
-          'Esta acción es permanente y no se puede deshacer. ¿Querés continuar?',
+          'Esta acción es permanente: se borran tu perfil y tus reservas. ¿Querés continuar?',
         ),
         actions: [
           TextButton(
@@ -69,8 +124,13 @@ class _PerfilEditState extends State<PerfilEdit> {
         ],
       ),
     );
-    if (confirmed == true) {
-      await FirebaseAuth.instance.currentUser?.delete();
+    if (confirmed != true) return;
+    try {
+      // El backend borra el perfil, las reservas y la cuenta de Firebase.
+      await ApiClient.instance.deleteMe();
+      await FirebaseAuth.instance.signOut();
+    } on ApiException catch (e) {
+      if (mounted) showSnack(context, e.message);
     }
   }
 
@@ -204,7 +264,13 @@ class _PerfilEditState extends State<PerfilEdit> {
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
-                icon: Icon(_editing ? Icons.check : Icons.edit, size: 16),
+                icon: _saving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(_editing ? Icons.check : Icons.edit, size: 16),
                 label: Text(_editing ? 'Guardar' : 'Editar'),
               ),
             ],
@@ -220,7 +286,7 @@ class _PerfilEditState extends State<PerfilEdit> {
           const SizedBox(height: 16),
           _buildField('DNI', _dniController),
           const SizedBox(height: 16),
-          _buildField('FECHA DE NACIMIENTO', _fechaController),
+          _buildField('FECHA DE NACIMIENTO (DD/MM/AAAA)', _fechaController),
           const SizedBox(height: 16),
           _buildField(
             'EMAIL',

@@ -13,6 +13,7 @@
 migrate_working_dir/
 NOTAS.md
 tp_2026_consigna.txt
+.claude
 
 # IntelliJ related
 *.iml

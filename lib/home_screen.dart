@@ -1,11 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'date_utils.dart';
 import 'perfil_edit.dart';
 import 'profile_widgets.dart';
+import 'reserva.dart';
 import 'reservas_screen.dart';
 import 'sede.dart';
+import 'sede_screen.dart';
 import 'sedes_screen.dart';
+import 'services/api_client.dart';
+import 'services/profile_store.dart';
+import 'user_profile.dart';
+import 'widgets/common.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,48 +23,86 @@ class HomeScreen extends StatefulWidget {
   // State<HomeScreen>, especificamente _HomeScreenState.
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  // Mock: se reemplazará por datos reales del perfil del usuario más adelante.
-  static const _fullName = 'Juan Pérez';
-  static const _dni = '30.123.456';
-  static const _birthDate = '12/04/1990';
-  static const _mockNotifications = [
-    'Tu reserva de la cancha 3 fue confirmada.',
-    'Recordá tu turno de mañana a las 18:00.',
+class _HomeData {
+  final List<Sede> sedes;
+  final List<Reserva> reservas;
+
+  const _HomeData(this.sedes, this.reservas);
+
+  Reserva? get nextReservation {
+    final active = reservas.where((r) => r.isActive).toList()
+      ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+    return active.isEmpty ? null : active.first;
+  }
+
+  List<String> get notifications => [
+    for (final r in reservas.where((r) => r.isActive).take(3))
+      'Reserva confirmada: ${r.cancha}, ${r.sede}, ${r.fechaLabel} ${r.horario}.',
   ];
-  static const _nextReservation = {
-    'cancha': 'Cancha 3 - Fútbol',
-    'sede': 'Sede Norte',
-    'horario': 'Mañana, 18:00',
-  };
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   static const _filters = ['Todos', 'Futbol', 'Tenis', 'Golf'];
 
+  final _store = ProfileStore.instance;
+  late Future<_HomeData> _future;
   bool _profileMenuOpen = false;
   int _selectedIndex = 0;
   String _selectedFilter = 'Todos';
 
-  String get _firstName => _fullName.trim().split(RegExp(r'\s+')).first;
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
 
-  String get _lastName => _fullName.trim().split(RegExp(r'\s+')).last;
+  Future<_HomeData> _load() async {
+    final results = await Future.wait([
+      ApiClient.instance.getSedes(),
+      ApiClient.instance.getReservas(),
+    ]);
+    return _HomeData(results[0] as List<Sede>, results[1] as List<Reserva>);
+  }
+
+  void _reload() => setState(() => _future = _load());
+
+  void _goToTab(int index) {
+    setState(() {
+      _selectedIndex = index;
+      _profileMenuOpen = false;
+      // Al volver a Inicio se refrescan las reservas (pudo reservar o cancelar en otra pestana).
+      if (index == 0) _future = _load();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+    return ListenableBuilder(
+      listenable: _store,
+      builder: (context, _) {
+        final profile = _store.profile;
+        if (profile == null) return const Scaffold(body: LoadingView());
+        return _buildScaffold(profile);
+      },
+    );
+  }
+
+  Widget _buildScaffold(UserProfile profile) {
+    final email = FirebaseAuth.instance.currentUser?.email ?? profile.email;
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
           switch (_selectedIndex) {
             0 => _HomeContent(
-              firstName: _firstName,
-              initials: initialsFor(_fullName),
-              notifications: _mockNotifications,
-              nextReservation: _nextReservation,
+              firstName: profile.firstName,
+              initials: profile.initials,
+              future: _future,
+              onRetry: _reload,
               filters: _filters,
               selectedFilter: _selectedFilter,
               onFilterSelected: (filter) =>
                   setState(() => _selectedFilter = filter),
-              sedes: kSedes,
               onAvatarTap: () =>
                   setState(() => _profileMenuOpen = !_profileMenuOpen),
             ),
@@ -68,12 +113,11 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           if (_profileMenuOpen)
             _ProfileMenuOverlay(
-              fullName: _fullName,
-              lastName: _lastName,
-              dni: _dni,
-              birthDate: _birthDate,
+              profile: profile,
               email: email,
               onClose: () => setState(() => _profileMenuOpen = false),
+              onOpenProfile: () => _goToTab(3),
+              onOpenReservas: () => _goToTab(2),
             ),
         ],
       ),
@@ -89,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
           unselectedItemColor: Colors.grey[500],
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
+          onTap: _goToTab,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
             BottomNavigationBarItem(
@@ -111,71 +155,87 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HomeContent extends StatelessWidget {
   final String firstName;
   final String initials;
-  final List<String> notifications;
-  final Map<String, String> nextReservation;
+  final Future<_HomeData> future;
+  final VoidCallback onRetry;
   final List<String> filters;
   final String selectedFilter;
   final ValueChanged<String> onFilterSelected;
-  final List<Sede> sedes;
   final VoidCallback onAvatarTap;
 
   const _HomeContent({
     required this.firstName,
     required this.initials,
-    required this.notifications,
-    required this.nextReservation,
+    required this.future,
+    required this.onRetry,
     required this.filters,
     required this.selectedFilter,
     required this.onFilterSelected,
-    required this.sedes,
     required this.onAvatarTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final filteredSedes = selectedFilter == 'Todos'
-        ? sedes
-        : sedes.where((sede) => sede.sports.contains(selectedFilter)).toList();
+    return FutureBuilder<_HomeData>(
+      future: future,
+      builder: (context, snapshot) {
+        final data = snapshot.data;
+        final done = snapshot.connectionState == ConnectionState.done;
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _HomeHeader(
+                firstName: firstName,
+                initials: initials,
+                notifications: data?.notifications ?? const [],
+                onAvatarTap: onAvatarTap,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                child: !done
+                    ? const Padding(
+                        padding: EdgeInsets.all(40),
+                        child: LoadingView(),
+                      )
+                    : snapshot.hasError
+                    ? ErrorRetry(message: '${snapshot.error}', onRetry: onRetry)
+                    : _buildBody(data!),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _HomeHeader(
-            firstName: firstName,
-            initials: initials,
-            notifications: notifications,
-            onAvatarTap: onAvatarTap,
+  Widget _buildBody(_HomeData data) {
+    final filteredSedes = selectedFilter == 'Todos'
+        ? data.sedes
+        : data.sedes.where((s) => s.sports.contains(selectedFilter)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _NextReservationCard(reservation: data.nextReservation),
+        const SizedBox(height: 28),
+        _FilterButtons(
+          filters: filters,
+          selectedFilter: selectedFilter,
+          onSelected: onFilterSelected,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'SEDES DISPONIBLES',
+          style: TextStyle(
+            color: Colors.grey[850],
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            letterSpacing: 0.8,
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _NextReservationCard(reservation: nextReservation),
-                const SizedBox(height: 28),
-                _FilterButtons(
-                  filters: filters,
-                  selectedFilter: selectedFilter,
-                  onSelected: onFilterSelected,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'SEDES DISPONIBLES',
-                  style: TextStyle(
-                    color: Colors.grey[850],
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _SedesCarousel(sedes: filteredSedes),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        _SedesCarousel(sedes: filteredSedes),
+      ],
     );
   }
 }
@@ -201,7 +261,7 @@ class _HomeHeader extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/images/cancha-tenis.jpg', fit: BoxFit.cover),
+          const AssetImageWithFallback('assets/images/cancha-tenis.jpg'),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -267,7 +327,7 @@ class _HomeHeader extends StatelessWidget {
 }
 
 class _NextReservationCard extends StatelessWidget {
-  final Map<String, String> reservation;
+  final Reserva? reservation;
 
   const _NextReservationCard({required this.reservation});
 
@@ -304,7 +364,7 @@ class _NextReservationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  reservation['cancha']!,
+                  reservation?.cancha ?? 'Sin reservas próximas',
                   style: TextStyle(
                     color: Colors.grey[850],
                     fontWeight: FontWeight.bold,
@@ -312,7 +372,9 @@ class _NextReservationCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${reservation['sede']} · ${reservation['horario']}',
+                  reservation == null
+                      ? 'Elegí una sede para reservar'
+                      : '${reservation!.sede} · ${reservation!.fechaLabel}, ${reservation!.horario}',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
               ],
@@ -375,6 +437,12 @@ class _SedesCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (sedes.isEmpty) {
+      return Text(
+        'No hay sedes para este deporte.',
+        style: TextStyle(color: Colors.grey[500]),
+      );
+    }
     return SizedBox(
       height: 140,
       child: ListView.separated(
@@ -383,33 +451,38 @@ class _SedesCarousel extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final sede = sedes[index];
-          return Container(
-            width: 180,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.yellow[50],
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[700]!, width: 1),
+          return GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => SedeScreen(sede: sede)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.location_on, color: Colors.lime[700]),
-                const SizedBox(height: 8),
-                Text(
-                  sede.name,
-                  style: TextStyle(
-                    color: Colors.grey[850],
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
+            child: Container(
+              width: 180,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.yellow[50],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey[700]!, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.location_on, color: Colors.lime[700]),
+                  const SizedBox(height: 8),
+                  Text(
+                    sede.name,
+                    style: TextStyle(
+                      color: Colors.grey[850],
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  sede.sports.join(' y '),
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    sede.sports.join(' y '),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -419,20 +492,18 @@ class _SedesCarousel extends StatelessWidget {
 }
 
 class _ProfileMenuOverlay extends StatelessWidget {
-  final String fullName;
-  final String lastName;
-  final String dni;
-  final String birthDate;
+  final UserProfile profile;
   final String email;
   final VoidCallback onClose;
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenReservas;
 
   const _ProfileMenuOverlay({
-    required this.fullName,
-    required this.lastName,
-    required this.dni,
-    required this.birthDate,
+    required this.profile,
     required this.email,
     required this.onClose,
+    required this.onOpenProfile,
+    required this.onOpenReservas,
   });
 
   @override
@@ -480,7 +551,7 @@ class _ProfileMenuOverlay extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        initialsFor(fullName),
+                        profile.initials,
                         style: const TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
@@ -495,7 +566,7 @@ class _ProfileMenuOverlay extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            fullName,
+                            profile.fullName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -521,12 +592,12 @@ class _ProfileMenuOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Apellido: $lastName',
+                  'Apellido: ${profile.lastName}',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'DNI: $dni',
+                  'DNI: ${formatDni(profile.dni)}',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
                 const SizedBox(height: 4),
@@ -536,7 +607,7 @@ class _ProfileMenuOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Nac.: $birthDate',
+                  'Nac.: ${profile.birthDateLabel}',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
                 const SizedBox(height: 16),
@@ -558,7 +629,7 @@ class _ProfileMenuOverlay extends StatelessWidget {
                       ),
                       alignment: Alignment.centerLeft,
                     ),
-                    onPressed: () {},
+                    onPressed: onOpenProfile,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -580,7 +651,7 @@ class _ProfileMenuOverlay extends StatelessWidget {
                       ),
                       alignment: Alignment.centerLeft,
                     ),
-                    onPressed: () {},
+                    onPressed: onOpenReservas,
                   ),
                 ),
                 const SizedBox(height: 8),

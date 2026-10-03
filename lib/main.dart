@@ -4,8 +4,11 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart'; // Archivo generado por `flutterfire configure`.
 
+import 'complete_profile_screen.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
+import 'services/profile_store.dart';
+import 'widgets/common.dart';
 
 // Punto de entrada para la aplicación:
 Future<void> main() async {
@@ -14,8 +17,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  await FirebaseAuth.instance.signOut();
 
   runApp(const MyApp());
 }
@@ -35,19 +36,18 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
-      home: const AuthGate(), // Este atributo se implementa en el flujo de autenticación.
+      home: const AuthGate(),
     );
   }
 }
 
-// Placeholder:
+// Decide que pantalla mostrar segun el estado de autenticacion de Firebase.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      // Actúa como el "esqueleto" de una pantalla individual. Contiene atributos tales como `AppBar` y `body`.
       // Una clase StreamBuilder en Flutter se usa para estar a la escucha
       // de un stream de datos y reconstruir su subarbol de widgets cuando
       // el stream emite nuevos datos.
@@ -57,16 +57,80 @@ class AuthGate extends StatelessWidget {
       //  - User en el caso de un usuario válido logueado
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: LoadingView());
         }
 
-        if (snapshot.hasData) {
-          return const HomeScreen();
-        }
+        return ListenableBuilder(
+          listenable: ProfileStore.instance,
+          builder: (context, _) {
+            // Mientras se registra, Firebase ya emitio el usuario pero el perfil todavia
+            // no existe: se mantiene LoginScreen para no perder su estado ni sus errores.
+            if (ProfileStore.instance.isRegistering || !snapshot.hasData) {
+              return const LoginScreen();
+            }
+            return const ProfileGate();
+          },
+        );
+      },
+    );
+  }
+}
 
-        return const LoginScreen();
+// Con un usuario autenticado, carga su perfil desde el backend antes de mostrar la app.
+class ProfileGate extends StatefulWidget {
+  const ProfileGate({super.key});
+
+  @override
+  State<ProfileGate> createState() => _ProfileGateState();
+}
+
+class _ProfileGateState extends State<ProfileGate> {
+  final _store = ProfileStore.instance;
+
+  @override
+  void dispose() {
+    _store.clear();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _store,
+      builder: (context, _) {
+        switch (_store.status) {
+          case ProfileStatus.ready:
+            return const HomeScreen();
+          case ProfileStatus.notFound:
+            return const CompleteProfileScreen();
+          case ProfileStatus.error:
+            return Scaffold(
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ErrorRetry(
+                        message: _store.error ?? 'No se pudo cargar tu perfil.',
+                        onRetry: _store.load,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => FirebaseAuth.instance.signOut(),
+                      child: const Text('Cerrar sesión'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          case ProfileStatus.idle:
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && _store.status == ProfileStatus.idle) _store.load();
+            });
+            return const Scaffold(body: LoadingView());
+          case ProfileStatus.loading:
+          case ProfileStatus.registering:
+            return const Scaffold(body: LoadingView());
+        }
       },
     );
   }
