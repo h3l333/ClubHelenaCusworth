@@ -66,3 +66,6 @@ htmlcov/
 # Firebase Admin service account keys
 *-firebase-adminsdk-*.json
 serviceAccount*.json
+
+# Google
+android/app/google-services.json
