@@ -60,7 +60,7 @@ class ApiClient {
     final future = switch (method) {
       'POST' => http.post(uri, headers: headers, body: encoded),
       'PATCH' => http.patch(uri, headers: headers, body: encoded),
-      'DELETE' => http.delete(uri, headers: headers),
+      'DELETE' => http.delete(uri, headers: headers, body: encoded),
       _ => http.get(uri, headers: headers),
     };
     return future.timeout(_timeout);
@@ -128,6 +128,12 @@ class ApiClient {
     );
     return UserProfile.fromJson(json as Map<String, dynamic>);
   }
+
+  Future<void> registerDeviceToken(String token) =>
+      _request('POST', '/device-tokens', body: {'token': token});
+
+  Future<void> deleteDeviceToken(String token) =>
+      _request('DELETE', '/device-tokens', body: {'token': token});
 
   Future<UserProfile> getMe() async {
     final json = await _request('GET', '/users/me');

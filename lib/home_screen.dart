@@ -13,6 +13,7 @@ import 'services/api_client.dart';
 import 'services/profile_store.dart';
 import 'user_profile.dart';
 import 'widgets/common.dart';
+import 'services/push_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -53,6 +54,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // TEMP-DEBUG-START: borrar al terminar de probar /device-tokens
+    PushService.init().then((t) async {
+      if (t == null) return;
+      await ApiClient.instance.registerDeviceToken(t);
+      debugPrint('registered: $t');
+      await ApiClient.instance.deleteDeviceToken(t);
+      debugPrint('deleted');
+    });
+    // TEMP-DEBUG-END
     _future = _load();
   }
 
