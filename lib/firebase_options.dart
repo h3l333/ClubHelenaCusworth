@@ -22,17 +22,6 @@ class DefaultFirebaseOptions {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
-      case TargetPlatform.iOS:
-        return ios;
-      case TargetPlatform.macOS:
-        return macos;
-      case TargetPlatform.windows:
-        return windows;
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -56,33 +45,5 @@ class DefaultFirebaseOptions {
     messagingSenderId: '21035806320',
     projectId: 'sports-club-b4f12',
     storageBucket: 'sports-club-b4f12.firebasestorage.app',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAcndCq9V05Dv8TBGGCJg2iivmBP9ThwWM',
-    appId: '1:21035806320:ios:04ff7e9a3f737af0638eb5',
-    messagingSenderId: '21035806320',
-    projectId: 'sports-club-b4f12',
-    storageBucket: 'sports-club-b4f12.firebasestorage.app',
-    iosBundleId: 'com.example.sportsClub',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAcndCq9V05Dv8TBGGCJg2iivmBP9ThwWM',
-    appId: '1:21035806320:ios:04ff7e9a3f737af0638eb5',
-    messagingSenderId: '21035806320',
-    projectId: 'sports-club-b4f12',
-    storageBucket: 'sports-club-b4f12.firebasestorage.app',
-    iosBundleId: 'com.example.sportsClub',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAS3IL3tzU_35cVFtyUbKUI1rk21zwGKTY',
-    appId: '1:21035806320:web:011b1e76105fb051638eb5',
-    messagingSenderId: '21035806320',
-    projectId: 'sports-club-b4f12',
-    authDomain: 'sports-club-b4f12.firebaseapp.com',
-    storageBucket: 'sports-club-b4f12.firebasestorage.app',
-    measurementId: 'G-5KG2Z9RLH9',
   );
 }
