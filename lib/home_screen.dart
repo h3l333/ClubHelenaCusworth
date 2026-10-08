@@ -54,15 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // TEMP-DEBUG-START: borrar al terminar de probar /device-tokens
-    PushService.init().then((t) async {
-      if (t == null) return;
-      await ApiClient.instance.registerDeviceToken(t);
-      debugPrint('registered: $t');
-      await ApiClient.instance.deleteDeviceToken(t);
-      debugPrint('deleted');
-    });
-    // TEMP-DEBUG-END
+    PushService.init();
     _future = _load();
   }
 
