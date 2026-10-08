@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'login/auth_actions.dart';
 import 'login/auth_stage.dart';
+import 'login/forgot_password_form.dart';
 import 'login/google_auth.dart';
 import 'login/login_form.dart';
 import 'login/register_form.dart';
+import 'login/reset_code_form.dart';
 import 'login/welcome_view.dart';
 import 'services/google_signin_button.dart';
 
@@ -29,6 +31,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _loginFormKey = GlobalKey<FormState>();
   final _registerFormKey = GlobalKey<FormState>();
+  final _forgotFormKey = GlobalKey<FormState>();
+  final _resetFormKey = GlobalKey<FormState>();
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -37,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _lastNameController = TextEditingController();
   final _birthDateController = TextEditingController();
   final _dniController = TextEditingController();
+  final _codeController = TextEditingController();
 
   AuthStage _stage = AuthStage.welcome; // Controla que pantalla se muestra: bienvenida, login o registro
   bool _isLoading = false; // Flag que indica si una solicitud de autorizacion asincronica esta ejecutandose
@@ -69,6 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _lastNameController.dispose();
     _birthDateController.dispose();
     _dniController.dispose();
+    _codeController.dispose();
     _google.dispose();
     super.dispose();
   }
@@ -109,6 +115,40 @@ class _LoginScreenState extends State<LoginScreen> {
     _setBusy(false);
   }
 
+  Future<void> _sendReset() async {
+    if (!_forgotFormKey.currentState!.validate()) return;
+
+    _setBusy(true);
+    final error = await requestResetCode(email: _emailController.text);
+
+    if (error != null) {
+      _showError(error);
+    } else if (mounted) {
+      _goTo(AuthStage.resetCode);
+    }
+    _setBusy(false);
+  }
+
+  Future<void> _confirmReset() async {
+    if (!_resetFormKey.currentState!.validate()) return;
+
+    _setBusy(true);
+    final error = await confirmResetCode(
+      email: _emailController.text,
+      code: _codeController.text,
+      newPassword: _passwordController.text,
+    );
+
+    if (error != null) {
+      _showError(error);
+    } else if (mounted) {
+      _codeController.clear();
+      _passwordController.clear();
+      _goTo(AuthStage.login);
+    }
+    _setBusy(false);
+  }
+
   void _goTo(AuthStage stage) {
     setState(() {
       _stage = stage;
@@ -142,6 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ? buildGoogleSignInButton()
                     : null,
                 onGoToRegister: () => _goTo(AuthStage.register),
+                onForgotPassword: () => _goTo(AuthStage.forgotPassword),
               ),
             ),
           ),
@@ -162,6 +203,33 @@ class _LoginScreenState extends State<LoginScreen> {
                 onBack: () => _goTo(AuthStage.login),
                 onSubmit: _submit,
                 onGoToLogin: () => _goTo(AuthStage.login),
+              ),
+            ),
+          ),
+          AuthStage.forgotPassword => Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ForgotPasswordForm(
+                formKey: _forgotFormKey,
+                emailController: _emailController,
+                isLoading: _isLoading,
+                errorMessage: _errorMessage,
+                onBack: () => _goTo(AuthStage.login),
+                onSubmit: _sendReset,
+              ),
+            ),
+          ),
+          AuthStage.resetCode => Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ResetCodeForm(
+                formKey: _resetFormKey,
+                codeController: _codeController,
+                passwordController: _passwordController,
+                isLoading: _isLoading,
+                errorMessage: _errorMessage,
+                onBack: () => _goTo(AuthStage.forgotPassword),
+                onSubmit: _confirmReset,
               ),
             ),
           ),

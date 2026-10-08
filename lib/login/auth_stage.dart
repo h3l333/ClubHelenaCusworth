@@ -1,1 +1,1 @@
-enum AuthStage { welcome, login, register }
+enum AuthStage { welcome, login, register, forgotPassword, resetCode }

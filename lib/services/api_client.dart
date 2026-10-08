@@ -156,6 +156,22 @@ class ApiClient {
   // Borra el perfil y sus reservas y, del lado del servidor, la cuenta de Firebase.
   Future<void> deleteMe() => _request('DELETE', '/users/me');
 
+  Future<void> requestPasswordReset(String email) => _request(
+    'POST',
+    '/auth/password-reset/request',
+    body: {'email': email},
+  );
+
+  Future<void> confirmPasswordReset({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) => _request(
+    'POST',
+    '/auth/password-reset/confirm',
+    body: {'email': email, 'code': code, 'new_password': newPassword},
+  );
+
   Future<List<Sede>> getSedes() async {
     final json = await _request('GET', '/sedes') as List;
     return json.map((s) => Sede.fromJson(s as Map<String, dynamic>)).toList();

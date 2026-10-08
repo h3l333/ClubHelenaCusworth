@@ -64,6 +64,47 @@ Future<String?> _guard(Future<void> Function() action) async {
   } on FormatException {
     return 'Fecha de nacimiento invalida (use DD/MM/AAAA).';
   } on FirebaseAuthException catch (e) {
-    return e.message ?? 'Error al autenticar. Vuelva a intentar por favor.';
+    return _translateAuthError(e);
   }
+}
+
+String _translateAuthError(FirebaseAuthException e) {
+  switch (e.code) {
+    case 'invalid-email':
+      return 'El correo ingresado no es valido.';
+    case 'too-many-requests':
+      return 'Demasiados intentos. Espere un momento antes de volver a intentar.';
+    case 'network-request-failed':
+      return 'Sin conexion a internet. Verifique su red e intente de nuevo.';
+    case 'user-not-found':
+    case 'wrong-password':
+    case 'invalid-credential':
+      return 'Correo o contrasena incorrectos.';
+    case 'email-already-in-use':
+      return 'Ya existe una cuenta con ese correo.';
+    case 'weak-password':
+      return 'La contrasena es demasiado debil.';
+    default:
+      return e.message ?? 'Error al autenticar. Vuelva a intentar por favor.';
+  }
+}
+
+// Retorna null si sale bien.
+Future<String?> requestResetCode({required String email}) {
+  return _guard(() => ApiClient.instance.requestPasswordReset(email.trim()));
+}
+
+// Retorna null si sale bien.
+Future<String?> confirmResetCode({
+  required String email,
+  required String code,
+  required String newPassword,
+}) {
+  return _guard(
+    () => ApiClient.instance.confirmPasswordReset(
+      email: email.trim(),
+      code: code.trim(),
+      newPassword: newPassword,
+    ),
+  );
 }

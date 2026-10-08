@@ -14,6 +14,7 @@ class LoginForm extends StatelessWidget {
   final VoidCallback onGoogleSignIn;
   final Widget? googleSignInButton;
   final VoidCallback onGoToRegister;
+  final VoidCallback onForgotPassword;
 
   const LoginForm({
     super.key,
@@ -27,6 +28,7 @@ class LoginForm extends StatelessWidget {
     required this.onGoogleSignIn,
     this.googleSignInButton,
     required this.onGoToRegister,
+    required this.onForgotPassword,
   });
 
   @override
@@ -58,7 +60,15 @@ class LoginForm extends StatelessWidget {
             obscureText: true,
             validator: validatePassword,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: isLoading ? null : onForgotPassword,
+              child: const Text('¿Olvidaste tu contraseña?'),
+            ),
+          ),
+          const SizedBox(height: 12),
           AuthErrorText(errorMessage),
           AuthSubmitButton(
             label: 'Iniciar sesión',
