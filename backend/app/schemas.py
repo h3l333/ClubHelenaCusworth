@@ -146,3 +146,9 @@ class PasswordResetConfirm(BaseModel):
     email: Annotated[str, Field(max_length=320)]
     code: Annotated[str, Field(pattern=r"^\d{6}$")]
     new_password: Annotated[str, Field(min_length=6, max_length=128)]
+
+
+class DeviceTokenIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    token: Annotated[str, Field(min_length=1, max_length=512)]
