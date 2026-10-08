@@ -132,3 +132,17 @@ class ReservaOut(BaseModel):
     hora: str
     price: float
     estado: str
+
+
+class PasswordResetRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: Annotated[str, Field(max_length=320)]
+
+
+class PasswordResetConfirm(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: Annotated[str, Field(max_length=320)]
+    code: Annotated[str, Field(pattern=r"^\d{6}$")]
+    new_password: Annotated[str, Field(min_length=6, max_length=128)]

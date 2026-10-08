@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import reservas, sedes, users
+from .routers import password_reset, reservas, sedes, users
 
 app = FastAPI(title="Sports Club API")
 
@@ -17,6 +17,7 @@ if settings.cors_origins:
 app.include_router(users.router)
 app.include_router(sedes.router)
 app.include_router(reservas.router)
+app.include_router(password_reset.router)
 
 
 @app.get("/health")

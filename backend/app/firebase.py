@@ -38,3 +38,15 @@ def delete_user(uid: str) -> None:
         auth.delete_user(uid, app=_get_app())
     except auth.UserNotFoundError:
         pass
+
+
+def get_uid_by_email(email: str) -> str | None:
+    try:
+        return auth.get_user_by_email(email, app=_get_app()).uid
+    except auth.UserNotFoundError:
+        return None
+
+
+def set_password(uid: str, new_password: str) -> None:
+    auth.update_user(uid, password=new_password, app=_get_app())
+    auth.revoke_refresh_tokens(uid, app=_get_app())
