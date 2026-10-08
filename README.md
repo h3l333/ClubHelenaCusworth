@@ -4,15 +4,19 @@ Flutter app (Firebase Auth) + FastAPI backend (PostgreSQL) for sports court book
 
 ## Backend (`backend/`)
 
+Requires Python and a running PostgreSQL instance that `DATABASE_URL` points to.
+
 ```bash
 cd backend
-python -m venv .venv && .venv/Scripts/activate
-pip install -r requirements-dev.txt
+python -m venv .venv && .venv/Scripts/activate   # PowerShell: .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 cp .env.example .env            # set DATABASE_URL and FIREBASE_SERVICE_ACCOUNT_JSON
+                                # and SMTP_* / MAIL_FROM (password reset codes)
 alembic upgrade head            # creates tables and seeds sedes/canchas
 uvicorn app.main:app --reload
-pytest                          # SQLite by default; TEST_DATABASE_URL=postgresql+psycopg://... for Postgres
 ```
+
+The API runs on http://localhost:8000. If `.venv` and `.env` already exist, skip those steps and only activate the venv, install, migrate and run.
 
 Schema changes: edit `app/models.py`, add a new file in `alembic/versions/`, commit both.
 
