@@ -20,7 +20,7 @@ The API runs on http://localhost:8000. If `.venv` and `.env` already exist, skip
 
 Schema changes: edit `app/models.py`, add a new file in `alembic/versions/`, commit both.
 
-Deploy: `render.yaml` (Render web service + free Postgres). Set `FIREBASE_SERVICE_ACCOUNT_JSON` in the Render dashboard.
+Deploy: `render.yaml` (Render web service + free Postgres). Set `FIREBASE_SERVICE_ACCOUNT_JSON`, `SMTP_*` and `MAIL_FROM` in the Render dashboard.
 
 ## App
 
