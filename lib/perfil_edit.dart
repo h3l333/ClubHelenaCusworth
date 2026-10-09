@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'date_utils.dart';
 import 'services/api_client.dart';
 import 'services/profile_store.dart';
+import 'services/push_service.dart';
 import 'user_profile.dart';
 import 'widgets/common.dart';
 
@@ -101,6 +102,7 @@ class _PerfilEditState extends State<PerfilEdit> {
   }
 
   Future<void> _cerrarSesion() async {
+    await PushService.dispose();
     await FirebaseAuth.instance.signOut();
   }
 

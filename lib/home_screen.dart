@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    PushService.init();
+    PushService.init().catchError((_) {});
     _future = _load();
   }
 
@@ -675,7 +675,10 @@ class _ProfileMenuOverlay extends StatelessWidget {
                       ),
                       alignment: Alignment.centerLeft,
                     ),
-                    onPressed: () => FirebaseAuth.instance.signOut(),
+                    onPressed: () async {
+                      await PushService.dispose();
+                      await FirebaseAuth.instance.signOut();
+                    },
                   ),
                 ),
               ],
