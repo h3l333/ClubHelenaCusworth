@@ -2,7 +2,7 @@ import json
 import threading
 
 import firebase_admin
-from firebase_admin import auth, credentials
+from firebase_admin import auth, credentials, messaging
 
 from .config import settings
 
@@ -50,3 +50,11 @@ def get_uid_by_email(email: str) -> str | None:
 def set_password(uid: str, new_password: str) -> None:
     auth.update_user(uid, password=new_password, app=_get_app())
     auth.revoke_refresh_tokens(uid, app=_get_app())
+
+
+def send_push(tokens: list[str], title: str, body: str) -> None:
+    msg = messaging.MulticastMessage(
+        tokens=tokens,
+        notification=messaging.Notification(title=title, body=body),
+    )
+    messaging.send_each_for_multicast(msg, app=_get_app())

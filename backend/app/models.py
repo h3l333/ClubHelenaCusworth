@@ -95,6 +95,7 @@ class Reserva(Base):
     hora: Mapped[time] = mapped_column(Time)
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     estado: Mapped[str] = mapped_column(String(20), default="confirmada")
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

@@ -1,10 +1,23 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
+from .notifier import run_forever
 from .routers import device_tokens, password_reset, reservas, sedes, users
 
-app = FastAPI(title="Sports Club API")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(run_forever())
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="Sports Club API", lifespan=lifespan)
 
 if settings.cors_origins:
     app.add_middleware(

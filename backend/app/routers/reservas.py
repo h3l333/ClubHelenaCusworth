@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from ..config import settings
 from ..deps import get_current_user, get_db
 from ..models import Cancha, Reserva, User
+from ..notifier import club_now_naive, is_due, notify_reserva
 from ..schemas import ReservaCreate, ReservaOut
 from .sedes import all_slots, club_now
 
@@ -52,6 +53,7 @@ def my_reservas(user: User = Depends(get_current_user), db: Session = Depends(ge
 @router.post("", response_model=ReservaOut, status_code=status.HTTP_201_CREATED)
 def create_reserva(
     body: ReservaCreate,
+    background: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -85,6 +87,8 @@ def create_reserva(
     except IntegrityError:
         db.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, "Ese horario ya fue reservado")
+    if is_due(reserva, club_now_naive()):
+        background.add_task(notify_reserva, reserva.id)
     return _out(_load(db, reserva.id))
 
 
