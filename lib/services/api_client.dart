@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 import '../date_utils.dart';
@@ -19,21 +20,50 @@ const _baseUrl = String.fromEnvironment(
 // El plan gratuito de Render "duerme" el servicio y el primer request puede tardar ~1 minuto.
 const _timeout = Duration(seconds: 60);
 
+const _offlineMessage =
+    'Sin conexion a internet. Verifique su red e intente de nuevo.';
+const _serverDownMessage =
+    'El servidor no esta disponible en este momento. Intente mas tarde.';
+const _sessionExpiredMessage = 'Su sesion vencio. Vuelva a iniciar sesion.';
+
 class ApiException implements Exception {
   ApiException(this.statusCode, this.message);
   final int statusCode;
   final String message;
 
   bool get isNotFound => statusCode == 404;
+  // 0: no hubo respuesta del servidor (sin internet, servidor caido o timeout).
+  bool get isNetwork => statusCode == 0;
 
   @override
   String toString() => message;
 }
 
+/// Mensaje apto para mostrar al usuario a partir de cualquier error.
+String describeError(Object error) => switch (error) {
+  ApiException(:final message) => message,
+  FormatException() => 'Fecha de nacimiento invalida (use DD/MM/AAAA).',
+  _ => 'Ocurrio un error inesperado. Intente de nuevo.',
+};
+
 class Slot {
   const Slot({required this.hora, required this.disponible});
   final String hora; // 'HH:MM'
   final bool disponible;
+}
+
+/// Consulta un host externo para saber si hay internet (en Web siempre retorna true).
+Future<bool> hasInternet() async {
+  // En Web el CORS haria fallar la consulta aunque haya red.
+  if (kIsWeb) return true;
+  try {
+    await http
+        .head(Uri.parse('https://clients3.google.com/generate_204'))
+        .timeout(const Duration(seconds: 5));
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 class ApiClient {
@@ -80,21 +110,43 @@ class ApiClient {
       }
       return _decode(res);
     } on TimeoutException {
-      throw ApiException(0, 'El servidor tardo demasiado en responder.');
+      throw ApiException(
+        0,
+        'El servidor tardo demasiado en responder. Puede estar iniciando, intente de nuevo en unos segundos.',
+      );
     } on http.ClientException {
-      throw ApiException(0, 'No se pudo conectar con el servidor.');
+      throw ApiException(0, await _connectionMessage());
+    } on FirebaseAuthException catch (e) {
+      // getIdToken falla si no hay red o si la sesion fue revocada.
+      final offline = e.code == 'network-request-failed';
+      throw ApiException(
+        offline ? 0 : 401,
+        offline ? _offlineMessage : _sessionExpiredMessage,
+      );
     }
   }
 
+  // Distingue "sin internet" de "servidor caido".
+  Future<String> _connectionMessage() async {
+    if (kIsWeb) return 'No se pudo conectar con el servidor.';
+    return await hasInternet() ? _serverDownMessage : _offlineMessage;
+  }
+
   dynamic _decode(http.Response res) {
-    final body = res.body.isEmpty
-        ? null
-        : jsonDecode(utf8.decode(res.bodyBytes));
+    dynamic body;
+    try {
+      body = res.body.isEmpty ? null : jsonDecode(utf8.decode(res.bodyBytes));
+    } on FormatException {
+      // Render responde con una pagina HTML (502/503) mientras el servicio esta caido o reiniciando.
+      throw ApiException(res.statusCode, _serverDownMessage);
+    }
     if (res.statusCode >= 200 && res.statusCode < 300) return body;
     throw ApiException(res.statusCode, _errorMessage(res.statusCode, body));
   }
 
   String _errorMessage(int status, dynamic body) {
+    if (status >= 500) return _serverDownMessage;
+    if (status == 401) return _sessionExpiredMessage;
     final detail = body is Map ? body['detail'] : null;
     if (detail is String) return detail;
     if (detail is List && detail.isNotEmpty) {
