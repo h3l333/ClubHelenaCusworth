@@ -146,7 +146,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.yellow[50],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey[700]!, width: 1),
       ),
@@ -206,7 +206,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.yellow[50],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey[700]!, width: 1),
       ),

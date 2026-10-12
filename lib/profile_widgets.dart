@@ -12,7 +12,7 @@ class NotificationsMenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<int>(
       icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-      color: Colors.yellow[50],
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey[700]!, width: 1),

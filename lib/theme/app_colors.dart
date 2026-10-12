@@ -17,4 +17,7 @@ class AppColors {
     800: Color(0xFF728DFE),
     900: Color(0xFF495BFF),
   });
+
+  // Fondo de tarjetas y campos: indigo agrisado con el brillo del yellow[50] anterior.
+  static const surface = Color(0xFFF7F8FC);
 }
