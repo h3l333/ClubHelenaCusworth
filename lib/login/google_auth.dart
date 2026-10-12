@@ -4,13 +4,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../services/api_client.dart';
+import 'auth_actions.dart';
+
 // Client ID de tipo "Web" del proyecto de Firebase; se pasa con --dart-define=GOOGLE_SERVER_CLIENT_ID=...
 const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
 // OAuth Client ID de tipo "Web" requerido por google_sign_in_web; se pasa con --dart-define=GOOGLE_CLIENT_ID=...
 const _googleClientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
 
-const _genericError = 'Error al autenticar. Vuelva a intentar por favor.';
 const _googleError = 'No se pudo iniciar sesión con Google.';
+const _offlineError =
+    'Sin conexion a internet. Verifique su red e intente de nuevo.';
 
 /// Encapsula el flujo de Google Sign-In + Firebase, sin depender de widgets.
 class GoogleAuthService {
@@ -55,9 +59,14 @@ class GoogleAuthService {
       await _signInToFirebase(account.authentication.idToken);
     } on GoogleSignInException catch (e) {
       debugPrint('GoogleSignInException: ${e.code} - ${e.description}');
-      if (e.code != GoogleSignInExceptionCode.canceled) onError(_googleError);
+      if (e.code != GoogleSignInExceptionCode.canceled) {
+        onError(_googleError);
+      } else if (!await hasInternet()) {
+        // Sin red, Credential Manager responde "canceled" (ej. [16] Account reauth failed).
+        onError(_offlineError);
+      }
     } on FirebaseAuthException catch (e) {
-      onError(e.message ?? _genericError);
+      onError(translateAuthError(e));
     } catch (e) {
       debugPrint('Error inesperado al iniciar sesión con Google: $e');
       onError(_googleError);
@@ -83,7 +92,7 @@ class GoogleAuthService {
     try {
       await _signInToFirebase(event.user.authentication.idToken);
     } on FirebaseAuthException catch (e) {
-      onError(e.message ?? _genericError);
+      onError(translateAuthError(e));
     } catch (e) {
       debugPrint('Error inesperado al iniciar sesión con Google: $e');
       onError(_googleError);

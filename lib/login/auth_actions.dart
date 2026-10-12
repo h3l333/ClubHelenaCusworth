@@ -45,11 +45,15 @@ Future<String?> registerWithEmail({
       );
       store.setProfile(profile);
     } catch (_) {
-      store.cancelRegistration();
       // Sin perfil en la base, se elimina la cuenta de Firebase para permitir reintentar el registro.
       try {
         await user?.delete();
-      } catch (_) {}
+      } catch (_) {
+        // Si no se pudo borrar, al menos se cierra la sesion para no quedar en ProfileGate.
+        await FirebaseAuth.instance.signOut();
+      }
+      // Se libera recien ahora: sin usuario activo, AuthGate mantiene el mismo LoginScreen.
+      store.cancelRegistration();
       rethrow;
     }
   });
@@ -64,11 +68,13 @@ Future<String?> _guard(Future<void> Function() action) async {
   } on FormatException {
     return 'Fecha de nacimiento invalida (use DD/MM/AAAA).';
   } on FirebaseAuthException catch (e) {
-    return _translateAuthError(e);
+    return translateAuthError(e);
+  } catch (e) {
+    return describeError(e);
   }
 }
 
-String _translateAuthError(FirebaseAuthException e) {
+String translateAuthError(FirebaseAuthException e) {
   switch (e.code) {
     case 'invalid-email':
       return 'El correo ingresado no es valido.';
@@ -85,7 +91,7 @@ String _translateAuthError(FirebaseAuthException e) {
     case 'weak-password':
       return 'La contrasena es demasiado debil.';
     default:
-      return e.message ?? 'Error al autenticar. Vuelva a intentar por favor.';
+      return 'Error al autenticar. Vuelva a intentar por favor.';
   }
 }
 
