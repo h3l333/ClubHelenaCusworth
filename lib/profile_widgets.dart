@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'theme/app_colors.dart';
+
 // Compartido entre las pantallas principales.
 class NotificationsMenuButton extends StatelessWidget {
   final List<String> notifications;
@@ -51,7 +53,7 @@ class ProfileAvatarButton extends StatelessWidget {
     final avatar = Padding(
       padding: const EdgeInsets.all(8),
       child: CircleAvatar(
-        backgroundColor: Colors.lime[400],
+        backgroundColor: AppColors.indigo[400],
         child: Text(
           initials,
           style: const TextStyle(

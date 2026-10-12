@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 class AssetImageWithFallback extends StatelessWidget {
   const AssetImageWithFallback(this.path, {super.key});
 
@@ -11,9 +13,13 @@ class AssetImageWithFallback extends StatelessWidget {
       path,
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => Container(
-        color: Colors.lime[100],
+        color: AppColors.indigo[100],
         alignment: Alignment.center,
-        child: Icon(Icons.sports_soccer, color: Colors.lime[700], size: 40),
+        child: Icon(
+          Icons.sports_soccer,
+          color: AppColors.indigo[700],
+          size: 40,
+        ),
       ),
     );
   }
@@ -61,7 +67,7 @@ class LoadingView extends StatelessWidget {
 
 ButtonStyle limeFilledStyle({double radius = 12, double fontSize = 16}) {
   return FilledButton.styleFrom(
-    backgroundColor: Colors.lime[400],
+    backgroundColor: AppColors.indigo[400],
     foregroundColor: Colors.black,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
     textStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
@@ -184,7 +190,7 @@ class AuthSwitchLink extends StatelessWidget {
             TextSpan(
               text: action,
               style: TextStyle(
-                color: Colors.lime[700],
+                color: AppColors.indigo[700],
                 fontWeight: FontWeight.bold,
               ),
             ),

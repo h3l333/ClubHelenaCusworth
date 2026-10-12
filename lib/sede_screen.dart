@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'theme/app_colors.dart';
+
 import 'booking_sheet.dart';
 import 'sede.dart';
 import 'services/api_client.dart';
@@ -135,7 +137,7 @@ class _SedeScreenState extends State<SedeScreen> {
                 Text(
                   'SEDE',
                   style: TextStyle(
-                    color: Colors.lime[500],
+                    color: AppColors.indigo[500],
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                     letterSpacing: 1.5,
@@ -181,8 +183,8 @@ class _SedeScreenState extends State<SedeScreen> {
               _selectedSport = sport;
               _selectedFutbolType = 'Todos';
             }),
-            backgroundColor: Colors.yellow[50],
-            selectedColor: Colors.lime[400],
+            backgroundColor: AppColors.indigo[50],
+            selectedColor: AppColors.indigo[400],
             checkmarkColor: Colors.black,
             labelStyle: TextStyle(
               color: selected ? Colors.black : Colors.grey[700],
@@ -214,7 +216,7 @@ class _SedeScreenState extends State<SedeScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: selected ? Colors.lime[400] : Colors.yellow[50],
+                color: selected ? AppColors.indigo[400] : AppColors.indigo[50],
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: Colors.grey[700]!, width: 1),
               ),
@@ -240,7 +242,7 @@ class _SedeScreenState extends State<SedeScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.yellow[50],
+        color: AppColors.indigo[50],
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey[700]!, width: 1),
       ),
@@ -292,7 +294,7 @@ class _SedeScreenState extends State<SedeScreen> {
                     icon: const Icon(Icons.bolt, size: 18),
                     label: const Text('VER HORARIOS / RESERVAR'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.lime[400],
+                      backgroundColor: AppColors.indigo[400],
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -330,7 +332,7 @@ class _SedeScreenState extends State<SedeScreen> {
           Icon(
             icon ?? _iconForFeature(label),
             size: 12,
-            color: Colors.lime[700],
+            color: AppColors.indigo[700],
           ),
           const SizedBox(width: 4),
           Text(

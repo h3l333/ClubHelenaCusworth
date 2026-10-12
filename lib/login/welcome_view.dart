@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 import '../widgets/common.dart';
 
 class WelcomeView extends StatelessWidget {
@@ -18,12 +20,12 @@ class WelcomeView extends StatelessWidget {
               width: 110,
               height: 110,
               decoration: BoxDecoration(
-                color: Colors.lime[400],
+                color: AppColors.indigo[400],
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.grey[700]!, width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.lime.withValues(alpha: 0.35),
+                    color: AppColors.indigo.withValues(alpha: 0.35),
                     blurRadius: 28,
                     spreadRadius: 2,
                   ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 String? validateRequired(String? value) =>
     (value == null || value.trim().isEmpty) ? 'Requerido' : null;
 
@@ -27,7 +29,7 @@ InputDecoration fieldDecoration(String? hint) {
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: Colors.lime[700]!, width: 2),
+      borderSide: BorderSide(color: AppColors.indigo[700]!, width: 2),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
@@ -83,7 +85,7 @@ class LabeledField extends StatelessWidget {
           obscureText: obscureText,
           keyboardType: keyboardType,
           style: TextStyle(color: Colors.grey[850]),
-          cursorColor: Colors.lime[700],
+          cursorColor: AppColors.indigo[700],
           decoration: fieldDecoration(hint),
           validator: validator,
         ),

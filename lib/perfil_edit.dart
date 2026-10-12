@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'theme/app_colors.dart';
+
 import 'date_utils.dart';
 import 'services/api_client.dart';
 import 'services/profile_store.dart';
@@ -157,7 +159,7 @@ class _PerfilEditState extends State<PerfilEdit> {
                     const TextSpan(text: 'MI '),
                     TextSpan(
                       text: 'PERFIL',
-                      style: TextStyle(color: Colors.lime[700]),
+                      style: TextStyle(color: AppColors.indigo[700]),
                     ),
                   ],
                 ),
@@ -186,7 +188,7 @@ class _PerfilEditState extends State<PerfilEdit> {
           height: 56,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.lime[400],
+            color: AppColors.indigo[400],
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -221,7 +223,7 @@ class _PerfilEditState extends State<PerfilEdit> {
               Text(
                 'MIEMBRO ACTIVO',
                 style: TextStyle(
-                  color: Colors.lime[700],
+                  color: AppColors.indigo[700],
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
                   letterSpacing: 0.6,
@@ -259,8 +261,8 @@ class _PerfilEditState extends State<PerfilEdit> {
               OutlinedButton.icon(
                 onPressed: _toggleEditing,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.lime[800],
-                  side: BorderSide(color: Colors.lime[700]!),
+                  foregroundColor: AppColors.indigo[800],
+                  side: BorderSide(color: AppColors.indigo[700]!),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),

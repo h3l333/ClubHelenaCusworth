@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'theme/app_colors.dart';
+
 import 'sede.dart';
 import 'sede_screen.dart';
 import 'services/api_client.dart';
@@ -104,7 +106,7 @@ class _SedeCard extends StatelessWidget {
               height: 48,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.lime[400],
+                color: AppColors.indigo[400],
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.location_on, color: Colors.black),
@@ -130,7 +132,10 @@ class _SedeCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     sede.sports.join(' · '),
-                    style: TextStyle(color: Colors.lime[900], fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.indigo[900],
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'theme/app_colors.dart';
+
 import 'reserva.dart';
 import 'services/api_client.dart';
 import 'widgets/common.dart';
@@ -182,7 +184,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
         height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? Colors.lime[400] : Colors.transparent,
+          color: selected ? AppColors.indigo[400] : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
@@ -216,7 +218,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
             height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: inactive ? Colors.grey[300] : Colors.lime[400],
+              color: inactive ? Colors.grey[300] : AppColors.indigo[400],
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -291,7 +293,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: inactive ? Colors.grey[200] : Colors.lime[400],
+        color: inactive ? Colors.grey[200] : AppColors.indigo[400],
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

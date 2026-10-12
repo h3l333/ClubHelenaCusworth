@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'theme/app_colors.dart';
+
 import 'date_utils.dart';
 import 'sede.dart';
 import 'services/api_client.dart';
@@ -131,7 +133,9 @@ class _BookingSheetState extends State<_BookingSheet> {
                     child: Container(
                       width: 52,
                       decoration: BoxDecoration(
-                        color: selected ? Colors.lime[400] : Colors.yellow[50],
+                        color: selected
+                            ? AppColors.indigo[400]
+                            : AppColors.indigo[50],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey[700]!),
                       ),
@@ -193,8 +197,8 @@ class _BookingSheetState extends State<_BookingSheet> {
                         onSelected: slot.disponible && !_saving
                             ? (_) => setState(() => _hora = slot.hora)
                             : null,
-                        selectedColor: Colors.lime[400],
-                        backgroundColor: Colors.yellow[50],
+                        selectedColor: AppColors.indigo[400],
+                        backgroundColor: AppColors.indigo[50],
                         side: BorderSide(color: Colors.grey[700]!),
                       ),
                   ],

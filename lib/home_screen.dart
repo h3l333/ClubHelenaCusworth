@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'theme/app_colors.dart';
+
 import 'date_utils.dart';
 import 'perfil_edit.dart';
 import 'profile_widgets.dart';
@@ -132,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: BottomNavigationBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          selectedItemColor: Colors.lime[700],
+          selectedItemColor: AppColors.indigo[700],
           unselectedItemColor: Colors.grey[500],
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
@@ -201,7 +203,10 @@ class _HomeContent extends StatelessWidget {
                         child: LoadingView(),
                       )
                     : snapshot.hasError
-                    ? ErrorRetry(message: describeError(snapshot.error!), onRetry: onRetry)
+                    ? ErrorRetry(
+                        message: describeError(snapshot.error!),
+                        onRetry: onRetry,
+                      )
                     : _buildBody(data!),
               ),
             ],
@@ -304,7 +309,7 @@ class _HomeHeader extends StatelessWidget {
                 Text(
                   'SPORTS CLUB',
                   style: TextStyle(
-                    color: Colors.lime[500],
+                    color: AppColors.indigo[500],
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                     letterSpacing: 1.5,
@@ -351,7 +356,7 @@ class _NextReservationCard extends StatelessWidget {
             height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.lime[400],
+              color: AppColors.indigo[400],
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.event_available, color: Colors.black),
@@ -363,7 +368,7 @@ class _NextReservationCard extends StatelessWidget {
               children: [
                 Text(
                   'Próxima reserva',
-                  style: TextStyle(color: Colors.lime[900], fontSize: 12),
+                  style: TextStyle(color: AppColors.indigo[900], fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -416,7 +421,7 @@ class _FilterButtons extends StatelessWidget {
             selected: selected,
             onSelected: (_) => onSelected(filter),
             backgroundColor: Colors.yellow[50],
-            selectedColor: Colors.lime[400],
+            selectedColor: AppColors.indigo[400],
             checkmarkColor: Colors.black,
             labelStyle: TextStyle(
               color: selected ? Colors.black : Colors.grey[700],
@@ -469,7 +474,7 @@ class _SedesCarousel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.location_on, color: Colors.lime[700]),
+                  Icon(Icons.location_on, color: AppColors.indigo[700]),
                   const SizedBox(height: 8),
                   Text(
                     sede.name,
@@ -550,7 +555,7 @@ class _ProfileMenuOverlay extends StatelessWidget {
                       height: 56,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: Colors.lime[400],
+                        color: AppColors.indigo[400],
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -582,7 +587,7 @@ class _ProfileMenuOverlay extends StatelessWidget {
                           Text(
                             'MIEMBRO ACTIVO',
                             style: TextStyle(
-                              color: Colors.lime[700],
+                              color: AppColors.indigo[700],
                               fontWeight: FontWeight.bold,
                               fontSize: 11,
                               letterSpacing: 0.6,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+import 'theme/app_colors.dart';
+
 import 'firebase_options.dart'; // Archivo generado por `flutterfire configure`.
 
 import 'complete_profile_screen.dart';
@@ -32,7 +34,7 @@ class MyApp extends StatelessWidget {
       title: 'Sports club.',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.lime,
+          seedColor: AppColors.indigo,
           brightness: Brightness.light,
         ),
       ),
