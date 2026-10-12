@@ -94,8 +94,8 @@ class _PerfilEditState extends State<PerfilEdit> {
       _fillFromProfile();
       setState(() => _editing = false);
       showSnack(context, 'Perfil actualizado');
-    } on ApiException catch (e) {
-      if (mounted) showSnack(context, e.message);
+    } catch (e) {
+      if (mounted) showSnack(context, describeError(e));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -131,8 +131,8 @@ class _PerfilEditState extends State<PerfilEdit> {
       // El backend borra el perfil, las reservas y la cuenta de Firebase.
       await ApiClient.instance.deleteMe();
       await FirebaseAuth.instance.signOut();
-    } on ApiException catch (e) {
-      if (mounted) showSnack(context, e.message);
+    } catch (e) {
+      if (mounted) showSnack(context, describeError(e));
     }
   }
 

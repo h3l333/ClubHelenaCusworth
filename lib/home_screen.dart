@@ -54,7 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    PushService.init().catchError((_) {});
+    // Sin push la app sigue funcionando; solo se registra el fallo.
+    PushService.init().catchError((e) => debugPrint('PushService.init: $e'));
     _future = _load();
   }
 
@@ -200,7 +201,7 @@ class _HomeContent extends StatelessWidget {
                         child: LoadingView(),
                       )
                     : snapshot.hasError
-                    ? ErrorRetry(message: '${snapshot.error}', onRetry: onRetry)
+                    ? ErrorRetry(message: describeError(snapshot.error!), onRetry: onRetry)
                     : _buildBody(data!),
               ),
             ],

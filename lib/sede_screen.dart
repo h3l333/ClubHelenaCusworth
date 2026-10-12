@@ -49,7 +49,7 @@ class _SedeScreenState extends State<SedeScreen> {
                 }
                 if (snapshot.hasError) {
                   return ErrorRetry(
-                    message: '${snapshot.error}',
+                    message: describeError(snapshot.error!),
                     onRetry: _retry,
                   );
                 }

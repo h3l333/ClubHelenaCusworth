@@ -61,8 +61,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         dni: _dniController.text.trim(),
       );
       ProfileStore.instance.setProfile(profile);
-    } on ApiException catch (e) {
-      if (mounted) setState(() => _errorMessage = e.message);
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = describeError(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

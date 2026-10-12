@@ -77,13 +77,13 @@ class _BookingSheetState extends State<_BookingSheet> {
           ),
         ),
       );
-    } on ApiException catch (e) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = e.message;
+        _error = describeError(e);
         // Si alguien tomo el horario mientras tanto, se refresca la disponibilidad.
-        if (e.statusCode == 409) _selectDay(_fecha);
+        if (e is ApiException && e.statusCode == 409) _selectDay(_fecha);
       });
     }
   }
@@ -168,7 +168,7 @@ class _BookingSheetState extends State<_BookingSheet> {
                 }
                 if (snapshot.hasError) {
                   return ErrorRetry(
-                    message: '${snapshot.error}',
+                    message: describeError(snapshot.error!),
                     onRetry: () => setState(() => _selectDay(_fecha)),
                   );
                 }

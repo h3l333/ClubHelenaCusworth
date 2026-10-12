@@ -51,9 +51,9 @@ class _ReservasScreenState extends State<ReservasScreen> {
       await ApiClient.instance.cancelReserva(reserva.id);
       if (!mounted) return;
       showSnack(context, 'Reserva cancelada');
-    } on ApiException catch (e) {
+    } catch (e) {
       if (!mounted) return;
-      showSnack(context, e.message);
+      showSnack(context, describeError(e));
     }
     _reload();
   }
@@ -73,7 +73,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
               }
               if (snapshot.hasError) {
                 return ErrorRetry(
-                  message: '${snapshot.error}',
+                  message: describeError(snapshot.error!),
                   onRetry: _reload,
                 );
               }

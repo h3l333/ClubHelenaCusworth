@@ -27,6 +27,9 @@ class ProfileStore extends ChangeNotifier {
       // 404: autenticado en Firebase pero sin perfil en la base (ej. primer login con Google).
       status = e.isNotFound ? ProfileStatus.notFound : ProfileStatus.error;
       error = e.message;
+    } catch (e) {
+      status = ProfileStatus.error;
+      error = describeError(e);
     }
     notifyListeners();
   }
