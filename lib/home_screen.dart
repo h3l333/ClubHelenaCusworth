@@ -269,7 +269,9 @@ class _HomeHeader extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          const AssetImageWithFallback('assets/images/cancha-tenis.jpg'),
+          const AssetImageWithFallback(
+            'assets/images/futbol/cancha-futbol.jpg',
+          ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -345,7 +347,7 @@ class _NextReservationCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.yellow[50],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey[700]!, width: 1),
       ),
@@ -420,7 +422,7 @@ class _FilterButtons extends StatelessWidget {
             label: Text(filter),
             selected: selected,
             onSelected: (_) => onSelected(filter),
-            backgroundColor: Colors.yellow[50],
+            backgroundColor: AppColors.surface,
             selectedColor: AppColors.indigo[400],
             checkmarkColor: Colors.black,
             labelStyle: TextStyle(
@@ -467,7 +469,7 @@ class _SedesCarousel extends StatelessWidget {
               width: 180,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.yellow[50],
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey[700]!, width: 1),
               ),
@@ -532,7 +534,7 @@ class _ProfileMenuOverlay extends StatelessWidget {
             width: 260,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.yellow[50],
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey[700]!, width: 1),
               boxShadow: [

@@ -30,19 +30,20 @@ class Cancha {
 
   String get label => '$name - ${subtype ?? sport}';
 
-  String get resolvedImage => image ?? _defaultImageForSport(sport);
+  String get resolvedImage => image ?? _defaultImage();
 
-  static String _defaultImageForSport(String sport) {
-    switch (sport.toLowerCase()) {
-      case 'futbol':
-        return 'assets/images/futbol/futbol-1.jpg';
-      case 'tenis':
-        return 'assets/images/tenis/tenis-1.jpg';
-      case 'hockey':
-        return 'assets/images/hockey/hockey-1.jpg';
-      default:
-        return 'assets/images/cancha-tenis.jpg';
-    }
+  // Cantidad de imagenes disponibles por deporte en assets/images/<deporte>/.
+  static const _imageCounts = {'futbol': 4, 'tenis': 3, 'golf': 3};
+
+  // Se reparte por id para que canchas del mismo deporte no repitan imagen.
+  // Sin imagenes para el deporte, la ruta no existe y AssetImageWithFallback muestra el icono.
+  String _defaultImage() {
+    final key = sport.toLowerCase();
+    final count = _imageCounts[key];
+    if (count == null) return 'assets/images/$key/cancha-$key.jpg';
+    final n = id % count;
+    final suffix = n == 0 ? '' : '-${n + 1}';
+    return 'assets/images/$key/cancha-$key$suffix.jpg';
   }
 }
 
@@ -78,5 +79,5 @@ class Sede {
   );
 
   String get resolvedHeaderImage =>
-      headerImage ?? 'assets/images/cancha-tenis.jpg';
+      headerImage ?? 'assets/images/sedes/sede-${localidad.toLowerCase()}.jpg';
 }
