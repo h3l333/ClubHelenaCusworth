@@ -94,11 +94,21 @@ class SedeOut(BaseModel):
     localidad: str
     address: str
     header_image: str | None
+    hora_apertura: time
+    hora_cierre: time
     sports: list[str]
+
+    @field_serializer("hora_apertura", "hora_cierre")
+    def _ser_hora(self, value: time) -> str:
+        return value.strftime("%H:%M")
 
 
 class SedeDetail(SedeOut):
     canchas: list[CanchaOut]
+
+
+class CanchaConSedeOut(CanchaOut):
+    sede: SedeOut
 
 
 class SlotOut(BaseModel):
@@ -120,7 +130,17 @@ class ReservaCreate(BaseModel):
 
     cancha_id: int
     fecha: date
-    hora: time
+    hora_inicio: time
+    hora_fin: time
+
+    @model_validator(mode="after")
+    def _horas_completas(self):
+        for value in (self.hora_inicio, self.hora_fin):
+            if value.minute or value.second or value.microsecond:
+                raise ValueError("Los horarios deben ser horas completas (minuto 00)")
+        if self.hora_fin <= self.hora_inicio:
+            raise ValueError("La hora de fin debe ser posterior a la de inicio")
+        return self
 
 
 class ReservaOut(BaseModel):
@@ -129,7 +149,8 @@ class ReservaOut(BaseModel):
     cancha: str
     sede: str
     fecha: date
-    hora: str
+    hora_inicio: str
+    hora_fin: str
     price: float
     estado: str
 

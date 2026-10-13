@@ -3,12 +3,12 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..config import settings
 from ..deps import get_db, get_firebase_claims
 from ..models import Cancha, Reserva, Sede
-from ..schemas import DisponibilidadOut, SedeDetail, SedeOut, SlotOut
+from ..schemas import CanchaConSedeOut, DisponibilidadOut, SedeDetail, SedeOut, SlotOut
 
 router = APIRouter(tags=["sedes"], dependencies=[Depends(get_firebase_claims)])
 
@@ -17,8 +17,8 @@ def club_now() -> datetime:
     return datetime.now(ZoneInfo(settings.club_timezone)).replace(tzinfo=None)
 
 
-def all_slots() -> list[time]:
-    return [time(h) for h in range(settings.open_hour, settings.close_hour)]
+def sede_slots(sede: Sede) -> list[time]:
+    return [time(h) for h in range(sede.hora_apertura.hour, sede.hora_cierre.hour)]
 
 
 @router.get("/sedes", response_model=list[SedeOut])
@@ -38,25 +38,41 @@ def get_sede(sede_id: int, db: Session = Depends(get_db)):
     return sede
 
 
+@router.get("/canchas", response_model=list[CanchaConSedeOut])
+def list_canchas(sport: str | None = None, db: Session = Depends(get_db)):
+    """Lista todas las canchas con su sede; `sport` filtra por tipo (ej: Futbol)."""
+    query = (
+        select(Cancha)
+        .options(joinedload(Cancha.sede).selectinload(Sede.canchas))
+        .order_by(Cancha.sport, Cancha.name)
+    )
+    if sport:
+        query = query.where(Cancha.sport == sport)
+    return db.scalars(query).all()
+
+
 @router.get("/canchas/{cancha_id}/disponibilidad", response_model=DisponibilidadOut)
 def disponibilidad(cancha_id: int, fecha: date, db: Session = Depends(get_db)):
-    if db.get(Cancha, cancha_id) is None:
+    cancha = db.get(Cancha, cancha_id)
+    if cancha is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Cancha no encontrada")
-    taken = set(
-        db.scalars(
-            select(Reserva.hora).where(
-                Reserva.cancha_id == cancha_id,
-                Reserva.fecha == fecha,
-                Reserva.estado == "confirmada",
-            )
+    reservas = db.execute(
+        select(Reserva.hora_inicio, Reserva.hora_fin).where(
+            Reserva.cancha_id == cancha_id,
+            Reserva.fecha == fecha,
+            Reserva.estado == "confirmada",
         )
     )
+    # Cada reserva ocupa todos los turnos de una hora entre inicio y fin.
+    taken = {
+        time(h) for inicio, fin in reservas for h in range(inicio.hour, fin.hour)
+    }
     now = club_now()
     slots = [
         SlotOut(
             hora=slot,
             disponible=slot not in taken and datetime.combine(fecha, slot) > now,
         )
-        for slot in all_slots()
+        for slot in sede_slots(cancha.sede)
     ]
     return DisponibilidadOut(fecha=fecha, slots=slots)

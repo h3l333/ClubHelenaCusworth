@@ -31,7 +31,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Cancelar reserva'),
         content: Text(
-          '¿Querés cancelar ${reserva.cancha} el ${reserva.fechaLabel} a las ${reserva.horario}?',
+          '¿Querés cancelar ${reserva.cancha} el ${reserva.fechaLabel} de ${reserva.horaInicio} a ${reserva.horaFin}?',
         ),
         actions: [
           TextButton(

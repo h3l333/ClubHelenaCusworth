@@ -20,7 +20,7 @@ def club_now_naive() -> datetime:
 
 
 def is_due(r: Reserva, now: datetime) -> bool:
-    return now < datetime.combine(r.fecha, r.hora) <= now + LEAD
+    return now < datetime.combine(r.fecha, r.hora_inicio) <= now + LEAD
 
 
 def notify_reserva(reserva_id: int) -> None:
@@ -41,7 +41,7 @@ def notify_reserva(reserva_id: int) -> None:
         try:
             if tokens:
                 send_push(
-                    tokens, "Reserva proxima", f"{r.cancha.name} a las {r.hora:%H:%M}"
+                    tokens, "Reserva proxima", f"{r.cancha.name} de {r.hora_inicio:%H:%M} a {r.hora_fin:%H:%M}"
                 )
         except Exception:
             r.notified_at = None  # liberar para reintentar en el proximo ciclo

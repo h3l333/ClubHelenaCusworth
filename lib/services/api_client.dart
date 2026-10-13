@@ -240,6 +240,17 @@ class ApiClient {
     return Sede.fromJson(json as Map<String, dynamic>);
   }
 
+  Future<List<({Cancha cancha, Sede sede})>> getCanchas() async {
+    final json = await _request('GET', '/canchas') as List;
+    return [
+      for (final c in json.cast<Map<String, dynamic>>())
+        (
+          cancha: Cancha.fromJson(c),
+          sede: Sede.fromJson(c['sede'] as Map<String, dynamic>),
+        ),
+    ];
+  }
+
   Future<List<Slot>> getDisponibilidad(int canchaId, DateTime fecha) async {
     final json = await _request(
       'GET',
@@ -266,12 +277,18 @@ class ApiClient {
   Future<Reserva> createReserva({
     required int canchaId,
     required DateTime fecha,
-    required String hora,
+    required String horaInicio,
+    required String horaFin,
   }) async {
     final json = await _request(
       'POST',
       '/reservas',
-      body: {'cancha_id': canchaId, 'fecha': toIsoDate(fecha), 'hora': hora},
+      body: {
+        'cancha_id': canchaId,
+        'fecha': toIsoDate(fecha),
+        'hora_inicio': horaInicio,
+        'hora_fin': horaFin,
+      },
     );
     return Reserva.fromJson(json as Map<String, dynamic>);
   }

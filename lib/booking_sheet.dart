@@ -36,7 +36,9 @@ class _BookingSheetState extends State<_BookingSheet> {
   late final List<DateTime> _dias;
   late DateTime _fecha;
   Future<List<Slot>>? _slots;
-  String? _hora;
+  // Rango elegido en horas completas: [_desde, _hasta).
+  int? _desde;
+  int? _hasta;
   bool _saving = false;
   String? _error;
 
@@ -53,9 +55,36 @@ class _BookingSheetState extends State<_BookingSheet> {
 
   void _selectDay(DateTime dia) {
     _fecha = dia;
-    _hora = null;
+    _desde = null;
+    _hasta = null;
     _error = null;
     _slots = ApiClient.instance.getDisponibilidad(widget.cancha.id, dia);
+  }
+
+  static int _hour(Slot slot) => int.parse(slot.hora.split(':')[0]);
+  static String _fmt(int hour) => '${hour.toString().padLeft(2, '0')}:00';
+
+  String get _rangoLabel => '${_fmt(_desde!)} - ${_fmt(_hasta!)}';
+
+  // Primer toque elige el inicio; un toque posterior extiende hasta ese turno
+  // si todos los intermedios estan libres; tocar el unico turno elegido lo deselecciona.
+  void _onSlotTap(List<Slot> slots, Slot slot) {
+    final h = _hour(slot);
+    final desde = _desde;
+    final hasta = _hasta;
+    if (desde != null && h == desde && hasta == h + 1) {
+      _desde = null;
+      _hasta = null;
+    } else if (desde != null &&
+        h >= hasta! &&
+        slots
+            .where((s) => _hour(s) >= desde && _hour(s) <= h)
+            .every((s) => s.disponible)) {
+      _hasta = h + 1;
+    } else {
+      _desde = h;
+      _hasta = h + 1;
+    }
   }
 
   Future<void> _confirm() async {
@@ -67,7 +96,8 @@ class _BookingSheetState extends State<_BookingSheet> {
       await ApiClient.instance.createReserva(
         canchaId: widget.cancha.id,
         fecha: _fecha,
-        hora: _hora!,
+        horaInicio: _fmt(_desde!),
+        horaFin: _fmt(_hasta!),
       );
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
@@ -75,7 +105,7 @@ class _BookingSheetState extends State<_BookingSheet> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'Reserva confirmada: ${widget.cancha.label}, ${formatDate(_fecha)} $_hora',
+            'Reserva confirmada: ${widget.cancha.label}, ${formatDate(_fecha)} $_rangoLabel',
           ),
         ),
       );
@@ -186,21 +216,33 @@ class _BookingSheetState extends State<_BookingSheet> {
                     ),
                   );
                 }
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final slot in slots)
-                      ChoiceChip(
-                        label: Text(slot.hora),
-                        selected: _hora == slot.hora,
-                        onSelected: slot.disponible && !_saving
-                            ? (_) => setState(() => _hora = slot.hora)
-                            : null,
-                        selectedColor: AppColors.indigo[400],
-                        backgroundColor: AppColors.indigo[50],
-                        side: BorderSide(color: Colors.grey[700]!),
-                      ),
+                    Text(
+                      'Tocá el turno de inicio y luego el último turno para reservar más de una hora.',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final slot in slots)
+                          ChoiceChip(
+                            label: Text(slot.hora),
+                            selected: _desde != null &&
+                                _hour(slot) >= _desde! &&
+                                _hour(slot) < _hasta!,
+                            onSelected: slot.disponible && !_saving
+                                ? (_) => setState(() => _onSlotTap(slots, slot))
+                                : null,
+                            selectedColor: AppColors.indigo[400],
+                            backgroundColor: AppColors.indigo[50],
+                            side: BorderSide(color: Colors.grey[700]!),
+                          ),
+                      ],
+                    ),
                   ],
                 );
               },
@@ -215,7 +257,7 @@ class _BookingSheetState extends State<_BookingSheet> {
               height: 48,
               child: FilledButton(
                 style: limeFilledStyle(fontSize: 15),
-                onPressed: _hora == null || _saving ? null : _confirm,
+                onPressed: _desde == null || _saving ? null : _confirm,
                 child: _saving
                     ? const SizedBox(
                         height: 20,
@@ -226,7 +268,9 @@ class _BookingSheetState extends State<_BookingSheet> {
                         ),
                       )
                     : Text(
-                        _hora == null ? 'Elegí un horario' : 'Reservar $_hora',
+                        _desde == null
+                            ? 'Elegí un horario'
+                            : 'Reservar $_rangoLabel · \$${(widget.cancha.price * (_hasta! - _desde!)).toStringAsFixed(0)}',
                       ),
               ),
             ),

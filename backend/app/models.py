@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     JSON,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
@@ -16,6 +17,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
+
+CANCHA_NAME_PATTERN = r"^[A-Za-z]+_[A-Za-z0-9]+_[0-9]+_[A-Za-z]+_[0-9]+$"
 
 
 class User(Base):
@@ -38,12 +41,25 @@ class User(Base):
 
 class Sede(Base):
     __tablename__ = "sedes"
+    __table_args__ = (
+        # Horario de funcionamiento en horas completas; el cierre es exclusivo (ultimo turno = cierre - 1h).
+        CheckConstraint(
+            "hora_cierre > hora_apertura"
+            " AND EXTRACT(MINUTE FROM hora_apertura) = 0"
+            " AND EXTRACT(SECOND FROM hora_apertura) = 0"
+            " AND EXTRACT(MINUTE FROM hora_cierre) = 0"
+            " AND EXTRACT(SECOND FROM hora_cierre) = 0",
+            name="ck_sedes_horario",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
     localidad: Mapped[str] = mapped_column(String(100))
     address: Mapped[str] = mapped_column(String(200))
     header_image: Mapped[str | None] = mapped_column(String(300))
+    hora_apertura: Mapped[time] = mapped_column(Time)
+    hora_cierre: Mapped[time] = mapped_column(Time)
 
     canchas: Mapped[list["Cancha"]] = relationship(
         back_populates="sede", order_by="Cancha.id"
@@ -56,12 +72,18 @@ class Sede(Base):
 
 class Cancha(Base):
     __tablename__ = "canchas"
+    __table_args__ = (
+        # Formato Localidad_Calle_Numero_Tipo_N, ej: Moron_Rivadavia_19850_Paddle_1.
+        CheckConstraint(
+            f"name ~ '{CANCHA_NAME_PATTERN}'", name="ck_canchas_name_formato"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     sede_id: Mapped[int] = mapped_column(
         ForeignKey("sedes.id", ondelete="CASCADE"), index=True
     )
-    name: Mapped[str] = mapped_column(String(100))
+    name: Mapped[str] = mapped_column(String(100), unique=True)
     sport: Mapped[str] = mapped_column(String(50))
     subtype: Mapped[str | None] = mapped_column(String(50))
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
@@ -73,16 +95,13 @@ class Cancha(Base):
 
 class Reserva(Base):
     __tablename__ = "reservas"
+    # La superposicion de horarios se valida en create_reserva bloqueando la fila de la cancha.
     __table_args__ = (
-        # Solo una reserva confirmada por cancha, dia y hora; las canceladas liberan el horario.
         Index(
-            "uq_reservas_slot_confirmada",
+            "ix_reservas_cancha_fecha_confirmada",
             "cancha_id",
             "fecha",
-            "hora",
-            unique=True,
             postgresql_where=text("estado = 'confirmada'"),
-            sqlite_where=text("estado = 'confirmada'"),
         ),
     )
 
@@ -92,7 +111,8 @@ class Reserva(Base):
     )
     cancha_id: Mapped[int] = mapped_column(ForeignKey("canchas.id"), index=True)
     fecha: Mapped[date] = mapped_column(Date)
-    hora: Mapped[time] = mapped_column(Time)
+    hora_inicio: Mapped[time] = mapped_column(Time)
+    hora_fin: Mapped[time] = mapped_column(Time)
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     estado: Mapped[str] = mapped_column(String(20), default="confirmada")
     notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

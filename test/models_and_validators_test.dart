@@ -61,11 +61,13 @@ void main() {
       'localidad': 'Norte',
       'address': 'Av. 1',
       'header_image': null,
+      'hora_apertura': '08:00',
+      'hora_cierre': '23:00',
       'sports': ['Futbol'],
       'canchas': [
         {
           'id': 3,
-          'name': 'Cancha 1',
+          'name': 'Norte_Libertador_1200_Futbol_1',
           'sport': 'Futbol',
           'subtype': 'Futbol 5',
           'price': 8000.0,
@@ -74,7 +76,8 @@ void main() {
         },
       ],
     });
-    expect(s.canchas.single.label, 'Cancha 1 - Futbol 5');
+    expect(s.horarioLabel, '08:00 a 23:00');
+    expect(s.canchas.single.label, 'Norte_Libertador_1200_Futbol_1 - Futbol 5');
     expect(s.canchas.single.resolvedImage, contains('futbol'));
   });
 
@@ -85,13 +88,18 @@ void main() {
       'cancha': 'Cancha 1 - Futbol 5',
       'sede': 'Sede Norte',
       'fecha': fecha,
-      'hora': '18:00',
+      'hora_inicio': '18:00',
+      'hora_fin': '20:00',
       'price': 8000,
       'estado': estado,
     };
     final future = DateTime.now().add(const Duration(days: 3));
     final futureIso = toIsoDate(future);
     expect(Reserva.fromJson(json(futureIso, 'confirmada')).isActive, isTrue);
+    expect(
+      Reserva.fromJson(json(futureIso, 'confirmada')).horario,
+      '18:00 - 20:00',
+    );
     expect(
       Reserva.fromJson(json(futureIso, 'cancelada')).estadoLabel,
       'Cancelada',

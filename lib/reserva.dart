@@ -4,7 +4,8 @@ class Reserva {
   final String cancha;
   final String sede;
   final DateTime fecha; // solo la fecha (medianoche local)
-  final String horario; // 'HH:MM'
+  final String horaInicio; // 'HH:MM'
+  final String horaFin; // 'HH:MM'
   final double price;
   final String estado; // 'confirmada' | 'cancelada'
 
@@ -14,7 +15,8 @@ class Reserva {
     required this.cancha,
     required this.sede,
     required this.fecha,
-    required this.horario,
+    required this.horaInicio,
+    required this.horaFin,
     required this.price,
     required this.estado,
   });
@@ -25,13 +27,16 @@ class Reserva {
     cancha: json['cancha'] as String,
     sede: json['sede'] as String,
     fecha: DateTime.parse(json['fecha'] as String),
-    horario: json['hora'] as String,
+    horaInicio: json['hora_inicio'] as String,
+    horaFin: json['hora_fin'] as String,
     price: (json['price'] as num).toDouble(),
     estado: json['estado'] as String,
   );
 
-  DateTime get startsAt {
-    final parts = horario.split(':');
+  String get horario => '$horaInicio - $horaFin';
+
+  DateTime _at(String hhmm) {
+    final parts = hhmm.split(':');
     return DateTime(
       fecha.year,
       fecha.month,
@@ -41,7 +46,11 @@ class Reserva {
     );
   }
 
+  DateTime get startsAt => _at(horaInicio);
+  DateTime get endsAt => _at(horaFin);
+
   bool get isCancelada => estado == 'cancelada';
+  // Una reserva ya iniciada no se puede cancelar, por eso deja de estar activa.
   bool get isPast => startsAt.isBefore(DateTime.now());
   bool get isActive => !isCancelada && !isPast;
 
