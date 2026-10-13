@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'theme/app_colors.dart';
 
+import 'canchas_screen.dart';
 import 'date_utils.dart';
 import 'perfil_edit.dart';
 import 'profile_widgets.dart';
@@ -112,8 +113,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() => _profileMenuOpen = !_profileMenuOpen),
             ),
             1 => const SedesScreen(),
-            2 => const ReservasScreen(),
-            3 => const PerfilEdit(),
+            2 => const CanchasScreen(),
+            3 => const ReservasScreen(),
+            4 => const PerfilEdit(),
             _ => const SizedBox.shrink(),
           },
           if (_profileMenuOpen)
@@ -121,8 +123,8 @@ class _HomeScreenState extends State<HomeScreen> {
               profile: profile,
               email: email,
               onClose: () => setState(() => _profileMenuOpen = false),
-              onOpenProfile: () => _goToTab(3),
-              onOpenReservas: () => _goToTab(2),
+              onOpenProfile: () => _goToTab(4),
+              onOpenReservas: () => _goToTab(3),
             ),
         ],
       ),
@@ -144,6 +146,10 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.location_on),
               label: 'Sedes',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.sports_soccer),
+              label: 'Canchas',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.calendar_month),

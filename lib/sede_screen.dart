@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'theme/app_colors.dart';
 
-import 'booking_sheet.dart';
 import 'sede.dart';
 import 'services/api_client.dart';
+import 'widgets/cancha_card.dart';
 import 'widgets/common.dart';
 
 // Detalle de una sede: carga sus canchas del backend y permite reservarlas.
@@ -95,7 +95,8 @@ class _SedeScreenState extends State<SedeScreen> {
               'No hay canchas para este filtro.',
               style: TextStyle(color: Colors.grey[500]),
             ),
-          for (final cancha in filteredCanchas) _buildCanchaCard(cancha),
+          for (final cancha in filteredCanchas)
+            CanchaCard(cancha: cancha, sede: widget.sede),
         ],
       ),
     );
@@ -156,6 +157,10 @@ class _SedeScreenState extends State<SedeScreen> {
                 const SizedBox(height: 6),
                 Text(
                   widget.sede.address,
+                  style: TextStyle(color: Colors.grey[300], fontSize: 13),
+                ),
+                Text(
+                  'Abierto de ${widget.sede.horarioLabel}',
                   style: TextStyle(color: Colors.grey[300], fontSize: 13),
                 ),
               ],
@@ -234,132 +239,5 @@ class _SedeScreenState extends State<SedeScreen> {
         },
       ),
     );
-  }
-
-  Widget _buildCanchaCard(Cancha cancha) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 16),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.indigo[50],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[700]!, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: AssetImageWithFallback(cancha.resolvedImage),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          if (cancha.subtype != null)
-                            _buildBadge(
-                              cancha.subtype!,
-                              icon: Icons.sports_soccer,
-                            ),
-                          for (final feature in cancha.features)
-                            _buildBadge(feature),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '\$${cancha.price.toStringAsFixed(0)}/h',
-                      style: TextStyle(
-                        color: Colors.grey[850],
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    icon: const Icon(Icons.bolt, size: 18),
-                    label: const Text('VER HORARIOS / RESERVAR'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.indigo[400],
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      textStyle: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    onPressed: () =>
-                        showBookingSheet(context, cancha, widget.sede),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBadge(String label, {IconData? icon}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[700]!, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon ?? _iconForFeature(label),
-            size: 12,
-            color: AppColors.indigo[700],
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[700],
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _iconForFeature(String feature) {
-    switch (feature.toLowerCase()) {
-      case 'outdoor':
-        return Icons.wb_sunny_outlined;
-      case 'indoor':
-        return Icons.home_outlined;
-      case 'iluminada':
-        return Icons.lightbulb_outline;
-      case 'techada':
-        return Icons.roofing_outlined;
-      default:
-        return Icons.check_circle_outline;
-    }
   }
 }
