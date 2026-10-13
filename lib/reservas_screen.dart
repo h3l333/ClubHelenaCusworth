@@ -17,14 +17,22 @@ class _ReservasScreenState extends State<ReservasScreen> {
   int _selectedTab = 0;
   EstadoReserva? _historialFiltro; // null = todas
   late Future<List<Reserva>> _future;
+  // Copia local de las reservas: permite actualizar la UI sin volver a pedir la lista.
+  List<Reserva> _reservas = const [];
 
   @override
   void initState() {
     super.initState();
-    _future = ApiClient.instance.getReservas();
+    _future = _load();
   }
 
-  void _reload() => setState(() => _future = ApiClient.instance.getReservas());
+  Future<List<Reserva>> _load() async {
+    final data = await ApiClient.instance.getReservas();
+    _reservas = data;
+    return data;
+  }
+
+  void _reload() => setState(() => _future = _load());
 
   Future<void> _cancel(Reserva reserva) async {
     final confirmed = await showDialog<bool>(
@@ -51,14 +59,20 @@ class _ReservasScreenState extends State<ReservasScreen> {
     );
     if (confirmed != true) return;
     try {
-      await ApiClient.instance.cancelReserva(reserva.id);
+      final cancelada = await ApiClient.instance.cancelReserva(reserva.id);
       if (!mounted) return;
+      // Se reemplaza por la version cancelada: sale de Proximas y pasa al historial.
+      setState(() {
+        _reservas = [
+          for (final r in _reservas) r.id == cancelada.id ? cancelada : r,
+        ];
+      });
       showSnack(context, 'Reserva cancelada');
     } catch (e) {
       if (!mounted) return;
       showSnack(context, describeError(e));
+      _reload(); // ante un error se resincroniza con el backend
     }
-    _reload();
   }
 
   @override
@@ -80,7 +94,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
                   onRetry: _reload,
                 );
               }
-              return _buildContent(snapshot.data!);
+              return _buildContent(_reservas);
             },
           ),
         ),
