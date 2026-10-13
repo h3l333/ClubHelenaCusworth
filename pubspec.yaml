@@ -69,6 +69,7 @@ flutter:
     - assets/images/futbol/
     - assets/images/tenis/
     - assets/images/golf/
+    - assets/images/hockey/
     - assets/images/sedes/
 
   # An image asset can refer to one or more resolution-specific "variants", see

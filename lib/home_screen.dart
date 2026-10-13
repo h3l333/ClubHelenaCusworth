@@ -46,7 +46,7 @@ class _HomeData {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const _filters = ['Todos', 'Futbol', 'Tenis', 'Golf'];
+  static const _filters = ['Todos', 'Futbol', 'Tenis', 'Golf', 'Hockey'];
 
   final _store = ProfileStore.instance;
   late Future<_HomeData> _future;

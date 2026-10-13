@@ -33,7 +33,12 @@ class Cancha {
   String get resolvedImage => image ?? _defaultImage();
 
   // Cantidad de imagenes disponibles por deporte en assets/images/<deporte>/.
-  static const _imageCounts = {'futbol': 4, 'tenis': 3, 'golf': 3};
+  static const _imageCounts = {
+    'futbol': 4,
+    'tenis': 3,
+    'golf': 3,
+    'hockey': 1,
+  };
 
   // Se reparte por id para que canchas del mismo deporte no repitan imagen.
   // Sin imagenes para el deporte, la ruta no existe y AssetImageWithFallback muestra el icono.
