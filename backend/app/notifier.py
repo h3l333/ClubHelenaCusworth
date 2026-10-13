@@ -41,7 +41,7 @@ def notify_reserva(reserva_id: int) -> None:
         try:
             if tokens:
                 send_push(
-                    tokens, "Reserva proxima", f"{r.cancha.name} de {r.hora_inicio:%H:%M} a {r.hora_fin:%H:%M}"
+                    tokens, "Reserva proxima", f"{r.cancha.display_name} de {r.hora_inicio:%H:%M} a {r.hora_fin:%H:%M}"
                 )
         except Exception:
             r.notified_at = None  # liberar para reintentar en el proximo ciclo

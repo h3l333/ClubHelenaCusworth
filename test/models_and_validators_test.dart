@@ -68,6 +68,7 @@ void main() {
         {
           'id': 3,
           'name': 'Norte_Libertador_1200_Futbol_1',
+          'display_name': 'Norte Libertador 1200 Futbol 1',
           'sport': 'Futbol',
           'subtype': 'Futbol 5',
           'price': 8000.0,
@@ -77,7 +78,7 @@ void main() {
       ],
     });
     expect(s.horarioLabel, '08:00 a 23:00');
-    expect(s.canchas.single.label, 'Norte_Libertador_1200_Futbol_1 - Futbol 5');
+    expect(s.canchas.single.label, 'Norte Libertador 1200 Futbol 1 (Futbol 5)');
     expect(s.canchas.single.resolvedImage, contains('futbol'));
   });
 

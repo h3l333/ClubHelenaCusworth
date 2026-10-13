@@ -43,7 +43,7 @@ class CanchaCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  cancha.name,
+                  cancha.displayName,
                   style: TextStyle(
                     color: Colors.grey[850],
                     fontWeight: FontWeight.bold,

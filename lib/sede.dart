@@ -1,7 +1,8 @@
 // Modelos de sedes y canchas. Vienen del backend (GET /sedes, GET /sedes/{id}).
 class Cancha {
   final int id;
-  final String name;
+  final String name; // formato Localidad_Calle_Altura_Tipo_N
+  final String displayName; // el mismo nombre con espacios, para mostrar
   final String sport;
   final String? subtype; // ej: 'Futbol 5', 'Futbol 11'
   final double price;
@@ -11,6 +12,7 @@ class Cancha {
   const Cancha({
     required this.id,
     required this.name,
+    required this.displayName,
     required this.sport,
     this.subtype,
     required this.price,
@@ -21,6 +23,7 @@ class Cancha {
   factory Cancha.fromJson(Map<String, dynamic> json) => Cancha(
     id: json['id'] as int,
     name: json['name'] as String,
+    displayName: json['display_name'] as String,
     sport: json['sport'] as String,
     subtype: json['subtype'] as String?,
     price: (json['price'] as num).toDouble(),
@@ -28,17 +31,12 @@ class Cancha {
     image: json['image'] as String?,
   );
 
-  String get label => '$name - ${subtype ?? sport}';
+  String get label => '$displayName (${subtype ?? sport})';
 
   String get resolvedImage => image ?? _defaultImage();
 
   // Cantidad de imagenes disponibles por deporte en assets/images/<deporte>/.
-  static const _imageCounts = {
-    'futbol': 4,
-    'tenis': 3,
-    'golf': 3,
-    'hockey': 1,
-  };
+  static const _imageCounts = {'futbol': 4, 'tenis': 3, 'golf': 3, 'hockey': 1};
 
   // Se reparte por id para que canchas del mismo deporte no repitan imagen.
   // Sin imagenes para el deporte, la ruta no existe y AssetImageWithFallback muestra el icono.

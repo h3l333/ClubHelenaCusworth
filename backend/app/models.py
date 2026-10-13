@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime, time
 from decimal import Decimal
 
@@ -91,6 +92,17 @@ class Cancha(Base):
     image: Mapped[str | None] = mapped_column(String(300))
 
     sede: Mapped[Sede] = relationship(back_populates="canchas")
+
+    @property
+    def display_name(self) -> str:
+        """Nombre legible: 'Centro_SanMartin_450_Golf_1' -> 'Centro San Martin 450 Golf 1'."""
+        spaced = self.name.replace("_", " ")
+        # Separa palabras pegadas (SanMartin) y letras de numeros (Ruta8).
+        return re.sub(r"(?<=[a-z])(?=[A-Z0-9])|(?<=[0-9])(?=[A-Za-z])", " ", spaced)
+
+    @property
+    def tipo(self) -> str:
+        return self.subtype or self.sport
 
 
 class Reserva(Base):

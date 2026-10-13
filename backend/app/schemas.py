@@ -79,6 +79,7 @@ class CanchaOut(BaseModel):
 
     id: int
     name: str
+    display_name: str
     sport: str
     subtype: str | None
     price: float

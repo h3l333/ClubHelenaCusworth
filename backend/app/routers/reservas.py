@@ -18,10 +18,7 @@ def _out(reserva: Reserva) -> ReservaOut:
     return ReservaOut(
         id=reserva.id,
         cancha_id=reserva.cancha_id,
-        cancha=(
-            f"{reserva.cancha.name} - "
-            f"{reserva.cancha.subtype or reserva.cancha.sport}"
-        ),
+        cancha=f"{reserva.cancha.display_name} ({reserva.cancha.tipo})",
         sede=reserva.cancha.sede.name,
         fecha=reserva.fecha,
         hora_inicio=reserva.hora_inicio.strftime("%H:%M"),
