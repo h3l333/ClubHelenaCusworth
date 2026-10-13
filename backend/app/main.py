@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 
-app = FastAPI(title="Sports Club API", lifespan=lifespan)
+app = FastAPI(title="ClubHelenaCusworth API", lifespan=lifespan)
 
 if settings.cors_origins:
     app.add_middleware(

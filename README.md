@@ -1,4 +1,4 @@
-# sports_club
+# ClubHelenaCusworth
 
 Flutter app (Firebase Auth) + FastAPI backend (PostgreSQL) for sports court bookings.
 
