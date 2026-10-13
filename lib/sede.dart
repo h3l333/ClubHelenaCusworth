@@ -53,6 +53,8 @@ class Sede {
   final String localidad;
   final String address;
   final String? headerImage;
+  final String horaApertura; // 'HH:MM'
+  final String horaCierre; // 'HH:MM'
   final List<String> sports;
   final List<Cancha> canchas; // vacio en el listado; completo en el detalle
 
@@ -62,6 +64,8 @@ class Sede {
     required this.localidad,
     required this.address,
     this.headerImage,
+    required this.horaApertura,
+    required this.horaCierre,
     required this.sports,
     this.canchas = const [],
   });
@@ -72,11 +76,15 @@ class Sede {
     localidad: json['localidad'] as String,
     address: json['address'] as String,
     headerImage: json['header_image'] as String?,
+    horaApertura: json['hora_apertura'] as String,
+    horaCierre: json['hora_cierre'] as String,
     sports: (json['sports'] as List? ?? const []).cast<String>(),
     canchas: (json['canchas'] as List? ?? const [])
         .map((c) => Cancha.fromJson(c as Map<String, dynamic>))
         .toList(),
   );
+
+  String get horarioLabel => '$horaApertura a $horaCierre';
 
   String get resolvedHeaderImage =>
       headerImage ?? 'assets/images/sedes/sede-${localidad.toLowerCase()}.jpg';

@@ -8,9 +8,6 @@ class Settings(BaseSettings):
     firebase_service_account_json: str = ""
     cors_origins: str = ""
     club_timezone: str = "America/Argentina/Buenos_Aires"
-    # Horario de atencion: turnos de 1 hora desde open_hour hasta close_hour (exclusivo).
-    open_hour: int = 8
-    close_hour: int = 23
     max_booking_days_ahead: int = 60
     smtp_host: str = ""
     smtp_port: int = 587

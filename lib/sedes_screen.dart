@@ -129,6 +129,10 @@ class _SedeCard extends StatelessWidget {
                     sede.address,
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
+                  Text(
+                    'Abierto de ${sede.horarioLabel}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     sede.sports.join(' · '),
