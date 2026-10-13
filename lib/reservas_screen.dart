@@ -15,6 +15,7 @@ class ReservasScreen extends StatefulWidget {
 
 class _ReservasScreenState extends State<ReservasScreen> {
   int _selectedTab = 0;
+  EstadoReserva? _historialFiltro; // null = todas
   late Future<List<Reserva>> _future;
 
   @override
@@ -88,14 +89,21 @@ class _ReservasScreenState extends State<ReservasScreen> {
   }
 
   Widget _buildContent(List<Reserva> reservas) {
-    final proximas = reservas.where((r) => r.isActive).toList();
+    // Las reservas en curso siguen en Proximas aunque ya no se puedan cancelar.
+    final proximas = reservas.where((r) => r.isActive || r.isEnCurso).toList();
     // El historial muestra primero lo mas reciente.
     final historial = reservas
-        .where((r) => !r.isActive)
+        .where((r) => r.isFinalizada || r.isCancelada)
         .toList()
         .reversed
         .toList();
-    final visibles = _selectedTab == 0 ? proximas : historial;
+    final finalizadas = historial.where((r) => r.isFinalizada).length;
+    final canceladas = historial.length - finalizadas;
+    final visibles = _selectedTab == 0
+        ? proximas
+        : _historialFiltro == null
+        ? historial
+        : historial.where((r) => r.estadoActual == _historialFiltro).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,19 +118,29 @@ class _ReservasScreenState extends State<ReservasScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          '${proximas.length} activas - ${historial.length} historial',
+          '${proximas.length} próximas - $finalizadas realizadas - $canceladas canceladas',
           style: TextStyle(color: Colors.grey[500], fontSize: 14),
         ),
         const SizedBox(height: 20),
         _buildTabBar(proximas.length),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+        if (_selectedTab == 1) ...[
+          _buildHistorialFiltros(historial.length, finalizadas, canceladas),
+          const SizedBox(height: 16),
+        ],
         Expanded(
           child: visibles.isEmpty
               ? Center(
                   child: Text(
                     _selectedTab == 0
                         ? 'No tenés reservas próximas.'
-                        : 'No tenés reservas en el historial.',
+                        : switch (_historialFiltro) {
+                            EstadoReserva.finalizada =>
+                              'No tenés reservas realizadas.',
+                            EstadoReserva.cancelada =>
+                              'No tenés reservas canceladas.',
+                            _ => 'No tenés reservas en el historial.',
+                          },
                     style: TextStyle(color: Colors.grey[500], fontSize: 14),
                   ),
                 )
@@ -172,6 +190,30 @@ class _ReservasScreenState extends State<ReservasScreen> {
     );
   }
 
+  Widget _buildHistorialFiltros(int total, int finalizadas, int canceladas) {
+    final filtros = <(String, EstadoReserva?)>[
+      ('Todas ($total)', null),
+      ('Realizadas ($finalizadas)', EstadoReserva.finalizada),
+      ('Canceladas ($canceladas)', EstadoReserva.cancelada),
+    ];
+    return Wrap(
+      spacing: 8,
+      children: [
+        for (final (label, filtro) in filtros)
+          ChoiceChip(
+            label: Text(label),
+            selected: _historialFiltro == filtro,
+            onSelected: (_) => setState(() => _historialFiltro = filtro),
+            backgroundColor: AppColors.indigo[50],
+            selectedColor: AppColors.indigo[400],
+            checkmarkColor: Colors.black,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+            side: BorderSide(color: Colors.grey[700]!, width: 1),
+          ),
+      ],
+    );
+  }
+
   Widget _buildTabButton(
     String label, {
     required bool selected,
@@ -200,7 +242,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
   }
 
   Widget _buildReservaCard(Reserva reserva) {
-    final inactive = !reserva.isActive;
+    final estado = reserva.estadoActual;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
@@ -218,17 +260,15 @@ class _ReservasScreenState extends State<ReservasScreen> {
             height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: inactive ? Colors.grey[300] : AppColors.indigo[400],
+              color: _estadoColors(estado).$1,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              reserva.isCancelada
-                  ? Icons.event_busy
-                  : inactive
-                  ? Icons.history
-                  : Icons.event_available,
-              color: Colors.black,
-            ),
+            child: Icon(switch (estado) {
+              EstadoReserva.confirmada => Icons.event_available,
+              EstadoReserva.enCurso => Icons.timelapse,
+              EstadoReserva.finalizada => Icons.task_alt,
+              EstadoReserva.cancelada => Icons.event_busy,
+            }, color: _estadoColors(estado).$2),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -288,18 +328,26 @@ class _ReservasScreenState extends State<ReservasScreen> {
     );
   }
 
+  // (fondo, texto) por estado: confirmada/en curso resaltadas, finalizada gris, cancelada roja.
+  static (Color, Color) _estadoColors(EstadoReserva estado) => switch (estado) {
+    EstadoReserva.confirmada => (AppColors.indigo[400]!, Colors.black),
+    EstadoReserva.enCurso => (AppColors.indigo[700]!, Colors.black),
+    EstadoReserva.finalizada => (Colors.grey[300]!, Colors.grey[700]!),
+    EstadoReserva.cancelada => (Colors.red[50]!, Colors.red[700]!),
+  };
+
   Widget _buildEstadoBadge(Reserva reserva) {
-    final inactive = !reserva.isActive;
+    final (fondo, texto) = _estadoColors(reserva.estadoActual);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: inactive ? Colors.grey[200] : AppColors.indigo[400],
+        color: fondo,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         reserva.estadoLabel,
         style: TextStyle(
-          color: inactive ? Colors.grey[600] : Colors.black,
+          color: texto,
           fontWeight: FontWeight.w600,
           fontSize: 11,
         ),

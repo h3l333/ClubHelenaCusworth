@@ -109,4 +109,23 @@ void main() {
       'Finalizada',
     );
   });
+
+  test('Reserva en curso no es cancelable ni finalizada', () {
+    final now = DateTime.now();
+    String hh(int h) => '${h.toString().padLeft(2, '0')}:00';
+    final r = Reserva(
+      id: 1,
+      canchaId: 1,
+      cancha: 'Norte_Libertador_1200_Futbol_1 - Futbol 5',
+      sede: 'Sede Norte',
+      fecha: DateTime(now.year, now.month, now.day),
+      horaInicio: hh(now.hour),
+      horaFin: hh(now.hour + 1),
+      price: 8000,
+      estado: 'confirmada',
+    );
+    expect(r.estadoActual, EstadoReserva.enCurso);
+    expect(r.estadoLabel, 'En curso');
+    expect(r.isActive, isFalse);
+  });
 }
