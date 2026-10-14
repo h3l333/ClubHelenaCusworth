@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 import '../date_utils.dart';
@@ -51,10 +50,8 @@ class Slot {
   final bool disponible;
 }
 
-/// Consulta un host externo para saber si hay internet (en Web siempre retorna true).
+/// Consulta un host externo para saber si hay internet.
 Future<bool> hasInternet() async {
-  // En Web el CORS haria fallar la consulta aunque haya red.
-  if (kIsWeb) return true;
   try {
     await http
         .head(Uri.parse('https://clients3.google.com/generate_204'))
@@ -127,7 +124,6 @@ class ApiClient {
 
   // Distingue "sin internet" de "servidor caido".
   Future<String> _connectionMessage() async {
-    if (kIsWeb) return 'No se pudo conectar con el servidor.';
     return await hasInternet() ? _serverDownMessage : _offlineMessage;
   }
 

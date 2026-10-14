@@ -2,7 +2,7 @@
 // ignore_for_file: type=lint
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show defaultTargetPlatform, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -16,9 +16,6 @@ import 'package:flutter/foundation.dart'
 /// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    if (kIsWeb) {
-      return web;
-    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
@@ -28,16 +25,6 @@ class DefaultFirebaseOptions {
         );
     }
   }
-
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAS3IL3tzU_35cVFtyUbKUI1rk21zwGKTY',
-    appId: '1:21035806320:web:4fdf3b4d084e6db8638eb5',
-    messagingSenderId: '21035806320',
-    projectId: 'sports-club-b4f12',
-    authDomain: 'sports-club-b4f12.firebaseapp.com',
-    storageBucket: 'sports-club-b4f12.firebasestorage.app',
-    measurementId: 'G-M0KZD8H0CK',
-  );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBjK_8UFdo_8jQ36_pR9PD21Wvh2dEFj8Q',

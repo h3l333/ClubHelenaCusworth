@@ -8,7 +8,6 @@ import 'login/login_form.dart';
 import 'login/register_form.dart';
 import 'login/reset_code_form.dart';
 import 'login/welcome_view.dart';
-import 'services/google_signin_button.dart';
 
 // StatefulWidget es una clase que representa una widget dinamica. Difiere de
 // StatelessWidget en varios sentidos:
@@ -46,7 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
   AuthStage _stage = AuthStage.welcome; // Controla que pantalla se muestra: bienvenida, login o registro
   bool _isLoading = false; // Flag que indica si una solicitud de autorizacion asincronica esta ejecutandose
   String? _errorMessage; // Guarda texto retornado por Firebase en caso de que la auten. falle
-  bool _googleSignInReady = false;
 
   late final GoogleAuthService _google;
 
@@ -54,15 +52,10 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _google = GoogleAuthService(onBusy: _setBusy, onError: _showError);
-    _google
-        .init()
-        .then((_) {
-          if (mounted) setState(() => _googleSignInReady = true);
-        })
-        .catchError((Object e) {
-          debugPrint('Error al inicializar Google Sign-In: $e');
-          _showError('No se pudo inicializar Google Sign-In.');
-        });
+    _google.init().catchError((Object e) {
+      debugPrint('Error al inicializar Google Sign-In: $e');
+      _showError('No se pudo inicializar Google Sign-In.');
+    });
   }
 
   @override
@@ -75,7 +68,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _birthDateController.dispose();
     _dniController.dispose();
     _codeController.dispose();
-    _google.dispose();
     super.dispose();
   }
 
@@ -178,9 +170,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 onBack: () => _goTo(AuthStage.welcome),
                 onSubmit: _submit,
                 onGoogleSignIn: _google.signIn,
-                googleSignInButton: _googleSignInReady
-                    ? buildGoogleSignInButton()
-                    : null,
                 onGoToRegister: () => _goTo(AuthStage.register),
                 onForgotPassword: () => _goTo(AuthStage.forgotPassword),
               ),

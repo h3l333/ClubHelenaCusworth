@@ -12,7 +12,6 @@ class LoginForm extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onSubmit;
   final VoidCallback onGoogleSignIn;
-  final Widget? googleSignInButton;
   final VoidCallback onGoToRegister;
   final VoidCallback onForgotPassword;
 
@@ -26,7 +25,6 @@ class LoginForm extends StatelessWidget {
     required this.onBack,
     required this.onSubmit,
     required this.onGoogleSignIn,
-    this.googleSignInButton,
     required this.onGoToRegister,
     required this.onForgotPassword,
   });
@@ -92,9 +90,7 @@ class LoginForm extends StatelessWidget {
           const SizedBox(height: 20),
           SizedBox(
             height: 52,
-            child:
-                googleSignInButton ??
-                OutlinedButton.icon(
+            child: OutlinedButton.icon(
                   icon: const Icon(Icons.g_mobiledata, size: 28),
                   label: const Text('Continuar con Google'),
                   style: OutlinedButton.styleFrom(

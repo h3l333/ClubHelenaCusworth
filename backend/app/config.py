@@ -6,7 +6,6 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql://postgres:postgres@localhost:5433/sports_club"
     firebase_service_account_json: str = ""
-    cors_origins: str = ""
     club_timezone: str = "America/Argentina/Buenos_Aires"
     max_booking_days_ahead: int = 60
     smtp_host: str = ""
