@@ -10,11 +10,10 @@ import '../reserva.dart';
 import '../sede.dart';
 import '../user_profile.dart';
 
-// URL base del backend. Se sobreescribe con --dart-define=API_BASE_URL=... (ej. https://sports-club-api.onrender.com).
-// El valor por defecto solo sirve para el emulador de Android contra un backend local.
+// URL base del backend. Se sobreescribe con --dart-define=API_BASE_URL=... (ej. http://10.0.2.2:8000 para un backend local).
 const _baseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://10.0.2.2:8000',
+  defaultValue: 'https://sports-club-0e2j.onrender.com',
 );
 
 // El plan gratuito de Render "duerme" el servicio y el primer request puede tardar ~1 minuto.
