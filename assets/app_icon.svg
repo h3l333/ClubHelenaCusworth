@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <clipPath id="head">
+      <ellipse cx="512" cy="400" rx="158" ry="198"/>
+    </clipPath>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="#C7D4FE"/>
+  <circle cx="770" cy="290" r="64" fill="#F7F9FE"/>
+  <g transform="rotate(-40 512 540)" fill="none" stroke="#495BFF" stroke-linecap="round">
+    <g clip-path="url(#head)" stroke-width="14">
+      <path d="M452 160V640M512 160V640M572 160V640M300 300H724M300 400H724M300 500H724"/>
+    </g>
+    <ellipse cx="512" cy="400" rx="180" ry="220" stroke-width="44"/>
+    <path d="M430 590Q490 640 512 700Q534 640 594 590" stroke-width="36" stroke-linejoin="round"/>
+    <path d="M512 700V880" stroke-width="56"/>
+  </g>
+</svg>
+
