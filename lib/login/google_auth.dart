@@ -5,8 +5,12 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../services/api_client.dart';
 import 'auth_actions.dart';
 
-// Client ID de tipo "Web" del proyecto de Firebase; se pasa con --dart-define=GOOGLE_SERVER_CLIENT_ID=...
-const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+// Client ID de tipo "Web" del proyecto de Firebase; se puede sobreescribir con --dart-define=GOOGLE_SERVER_CLIENT_ID=...
+const _googleServerClientId = String.fromEnvironment(
+  'GOOGLE_SERVER_CLIENT_ID',
+  defaultValue:
+      '21035806320-noc70m2fd7tllbmpi0cosd498v1fp5ut.apps.googleusercontent.com',
+);
 
 const _googleError = 'No se pudo iniciar sesión con Google.';
 const _offlineError =
