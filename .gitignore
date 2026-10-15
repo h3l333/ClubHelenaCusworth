@@ -59,7 +59,5 @@ htmlcov/
 *-firebase-adminsdk-*.json
 serviceAccount*.json
 
-# Google
-android/app/google-services.json
 # Personal use only
 docs/
