@@ -207,7 +207,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
   Widget _buildHistorialFiltros(int total, int finalizadas, int canceladas) {
     final filtros = <(String, EstadoReserva?)>[
       ('Todas ($total)', null),
-      ('Realizadas ($finalizadas)', EstadoReserva.finalizada),
+      ('Finalizadas ($finalizadas)', EstadoReserva.finalizada),
       ('Canceladas ($canceladas)', EstadoReserva.cancelada),
     ];
     return Wrap(
