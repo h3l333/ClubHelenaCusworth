@@ -63,3 +63,14 @@ La primera solicitud puede tardar ~1 minuto, debido a que el servicio gratuito d
 
 - Más detalles en [el README.md del backend](backend/README.md).
 - [Documentación de la API de producción](https://sports-club-0e2j.onrender.com/docs).
+
+## Aclaraciones
+
+### Historial del repositorio
+
+El desarrollo comenzó en otro repositorio, con un historial de commits distinto y más antiguo. Este repositorio continúa ese trabajo.
+
+### Limitaciones del plan gratuito de Render
+
+El servicio gratuito se suspende tras un período de inactividad, lo que detiene el bucle `run_forever` de `notifier.py`. Los recordatorios de reservas hechas con más de una hora de anticipación no se envían si el servicio está dormido.  
+Las reservas que comienzan dentro de la próxima hora se notifican al instante, ya que el aviso se envía durante la misma solicitud de creación. En cambio, los recordatorios de reservas hechas con más de una hora de anticipación dependen del bucle `run_forever` y no se envían si el servicio está dormido en ese momento.
