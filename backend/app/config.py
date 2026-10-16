@@ -8,10 +8,7 @@ class Settings(BaseSettings):
     firebase_service_account_json: str = ""
     club_timezone: str = "America/Argentina/Buenos_Aires"
     max_booking_days_ahead: int = 60
-    smtp_host: str = ""
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_password: str = ""
+    brevo_api_key: str = ""
     mail_from: str = ""
     reset_code_ttl_minutes: int = 10
     reset_max_attempts: int = 5
