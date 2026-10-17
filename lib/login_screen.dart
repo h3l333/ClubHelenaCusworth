@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _setBusy(bool busy) {
-    if (!mounted) return;
+    if (!mounted) return; // mounted indica si un objeto Estado está vinculado al widget tree
     setState(() {
       _isLoading = busy;
       if (busy) _errorMessage = null;

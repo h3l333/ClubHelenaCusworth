@@ -24,6 +24,7 @@ App para Android programada en Dart usando Flutter para la consulta y reserva de
 - Swagger (documentación de la API)
 - Firebase Auth, FCM (Firebase Cloud Messaging)
 - PostgreSQL
+- Brevo (envío de emails de recuperación de contraseña)
 - Render (despliegue)
 
 ## Requisitos Previos
