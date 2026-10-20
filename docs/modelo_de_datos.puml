@@ -1,0 +1,99 @@
+@startuml modelo_de_datos
+hide circle
+skinparam linetype ortho
+
+entity "users" as users {
+  * id : INTEGER <<PK>>
+  --
+  * firebase_uid : VARCHAR(128) <<UNIQUE>>
+  * email : VARCHAR(320)
+    first_name : VARCHAR(100)
+    last_name : VARCHAR(100)
+    birth_date : DATE
+    dni : VARCHAR(20) <<UNIQUE>>
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "sedes" as sedes {
+  * id : INTEGER <<PK>>
+  --
+  * name : VARCHAR(100) <<UNIQUE>>
+  * localidad : VARCHAR(100)
+  * address : VARCHAR(200)
+    header_image : VARCHAR(300)
+  * hora_apertura : TIME
+  * hora_cierre : TIME
+}
+
+entity "canchas" as canchas {
+  * id : INTEGER <<PK>>
+  --
+  * sede_id : INTEGER <<FK>>
+  * name : VARCHAR(100) <<UNIQUE>>
+  * sport : VARCHAR(50)
+    subtype : VARCHAR(50)
+  * price : NUMERIC(10,2)
+  * features : JSON
+    image : VARCHAR(300)
+}
+
+entity "reservas" as reservas {
+  * id : INTEGER <<PK>>
+  --
+  * user_id : INTEGER <<FK>>
+  * cancha_id : INTEGER <<FK>>
+  * fecha : DATE
+  * hora_inicio : TIME
+  * hora_fin : TIME
+  * price : NUMERIC(10,2)
+  * estado : VARCHAR(20)
+    notified_at : TIMESTAMPTZ
+  * created_at : TIMESTAMPTZ
+}
+
+entity "device_tokens" as device_tokens {
+  * id : INTEGER <<PK>>
+  --
+  * user_id : INTEGER <<FK>>
+  * token : VARCHAR(512) <<UNIQUE>>
+  * created_at : TIMESTAMPTZ
+}
+
+entity "password_reset_codes" as password_reset_codes {
+  * id : INTEGER <<PK>>
+  --
+  * email : VARCHAR(320)
+  * code_hash : VARCHAR(64)
+  * expires_at : TIMESTAMPTZ
+  * attempts : INTEGER
+    used_at : TIMESTAMPTZ
+  * created_at : TIMESTAMPTZ
+}
+
+sedes ||--o{ canchas : "tiene"
+users ||--o{ reservas : "realiza"
+canchas ||--o{ reservas : "es reservada en"
+users ||--o{ device_tokens : "registra"
+
+note bottom of sedes
+  ck_sedes_horario: hora_cierre > hora_apertura,
+  ambas en horas completas (minuto 00)
+end note
+
+note bottom of canchas
+  ck_canchas_name_formato:
+  Localidad_Calle_Numero_Tipo_N
+  (ej: Moron_Rivadavia_19850_Paddle_1)
+end note
+
+note bottom of reservas
+  estado: 'confirmada' | 'cancelada'
+  Superposicion validada en el backend
+  (bloqueo FOR UPDATE sobre la cancha)
+end note
+
+note bottom of password_reset_codes
+  Sin FK: se asocia al usuario por email
+end note
+@enduml

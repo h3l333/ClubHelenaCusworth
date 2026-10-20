@@ -1,0 +1,24 @@
+@startuml c4_contexto
+!include <C4/C4_Context>
+
+title Diagrama de contexto (C4 nivel 1) - Sports Club
+
+Person(socio, "Socio", "Miembro del club que reserva canchas desde su celular Android.")
+
+System(sportsClub, "Sports Club", "App Flutter + API FastAPI con PostgreSQL, desplegada en Render. Gestiona perfiles, sedes, canchas y reservas.")
+
+System_Ext(google, "Google Identity", "Inicio de sesión con cuenta de Google.")
+System_Ext(firebaseAuth, "Firebase Authentication", "Cuentas de usuario, tokens de ID y cambio de contraseña.")
+System_Ext(fcm, "Firebase Cloud Messaging", "Entrega de notificaciones push.")
+System_Ext(brevo, "Brevo", "Envío de emails transaccionales.")
+
+Rel(socio, sportsClub, "Se registra, inicia sesión, consulta disponibilidad y reserva canchas")
+Rel(sportsClub, google, "Solicita el token de ID de Google", "Credential Manager")
+Rel(sportsClub, firebaseAuth, "Inicia sesión, verifica tokens y cambia contraseñas", "Firebase SDK / Admin SDK")
+Rel(sportsClub, fcm, "Envía recordatorios de reservas próximas", "Admin SDK")
+Rel(sportsClub, brevo, "Envía códigos de recuperación de contraseña", "HTTPS/JSON")
+Rel(fcm, socio, "Entrega notificaciones push")
+Rel(brevo, socio, "Entrega el código de recuperación", "Email")
+
+SHOW_LEGEND()
+@enduml

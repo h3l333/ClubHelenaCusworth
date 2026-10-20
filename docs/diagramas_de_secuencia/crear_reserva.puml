@@ -1,0 +1,85 @@
+@startuml
+title Create reservation
+
+actor User
+participant "widgets/cancha_card.dart\n(CanchaCard)" as CC
+participant "booking_sheet.dart\n(_BookingSheet)" as BS
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(deps.py)" as DEPS
+participant "backend\n(routers/sedes.py)" as SEDES
+participant "backend\n(schemas.py\nReservaCreate)" as SCH
+participant "backend\n(routers/reservas.py)" as RES
+database "Postgres" as DB
+participant "backend\n(notifier.py)" as NOT
+participant "Firebase Cloud Messaging" as FCM
+
+== Check availability ==
+User -> CC : taps book
+CC -> BS : showBookingSheet(cancha, sede)
+BS -> BS : _selectDay(today)
+BS -> API : getDisponibilidad(canchaId, fecha)
+API -> SEDES : GET /canchas/{id}/disponibilidad?fecha=\nAuthorization: Bearer <token>
+SEDES -> DEPS : get_firebase_claims (verify_id_token)
+SEDES -> DB : SELECT confirmed reservas\nfor cancha + fecha
+DB --> SEDES : hora_inicio, hora_fin
+SEDES -> SEDES : one slot per hour of the sede's opening hours\ndisponible = not taken and in the future
+SEDES --> API : 200 DisponibilidadOut
+API --> BS : List<Slot>
+BS -> User : shows slots
+
+== Pick range ==
+User -> BS : taps slots
+BS -> BS : _onSlotTap()\n[_desde, _hasta), only free slots in between
+
+== Confirm ==
+User -> BS : taps confirm
+BS -> BS : _confirm()
+BS -> API : createReserva(canchaId, fecha, horaInicio, horaFin)
+API -> RES : POST /reservas\nAuthorization: Bearer <token>
+RES -> DEPS : get_current_user (verify_id_token, User row)
+RES -> SCH : validate body
+alt minutes != 00 or fin <= inicio
+  SCH --> API : 422
+end
+RES -> DB : SELECT cancha FOR UPDATE\n(locks concurrent bookings of this cancha)
+
+alt cancha not found
+  RES --> API : 404 Cancha no encontrada
+else outside sede hours
+  RES --> API : 422 <sede> funciona de X a Y
+else start already passed
+  RES --> API : 422 El horario ya paso
+else beyond max_booking_days_ahead
+  RES --> API : 422 Solo se puede reservar hasta N dias adelante
+else valid
+  RES -> DB : SELECT confirmed reserva overlapping\n(inicio < body.fin and fin > body.inicio)
+  alt overlap
+    RES -> DB : ROLLBACK (releases lock)
+    RES --> API : 409 Ese horario ya fue reservado
+  else free
+    RES -> DB : INSERT reserva (estado confirmada,\nprice = cancha.price * horas)
+    RES -> DB : COMMIT (releases lock)
+    opt starts within the next hour (is_due)
+      RES -> NOT : background task notify_reserva(id)
+    end
+    RES --> API : 201 ReservaOut
+  end
+end
+
+alt 201
+  API --> BS : Reserva
+  BS -> User : closes sheet, SnackBar "Reserva confirmada"
+else ApiException
+  API --> BS : ApiException
+  BS -> User : shows describeError(e)
+  opt 409
+    BS -> API : getDisponibilidad() (refresh slots)
+  end
+end
+
+== Immediate reminder (only if is_due) ==
+NOT -> DB : UPDATE reserva SET notified_at\nWHERE notified_at IS NULL (claim)
+NOT -> DB : SELECT device tokens of the user
+NOT -> FCM : send_push("Reserva proxima")
+FCM -> User : push notification
+@enduml

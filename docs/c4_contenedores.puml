@@ -1,0 +1,34 @@
+@startuml c4_contenedores
+!include <C4/C4_Container>
+
+title Diagrama de contenedores (C4 nivel 2) - Sports Club
+
+Person(socio, "Socio", "Miembro del club que reserva canchas desde su celular Android.")
+
+System_Boundary(sportsClub, "Sports Club") {
+  Container(app, "App móvil", "Flutter/Dart (lib/)", "Pantallas de login, perfil, sedes, canchas y reservas. Obtiene el token de Firebase y consume la API.")
+  Container(api, "API REST", "Python, FastAPI (backend/app/)", "Endpoints de usuarios, sedes y canchas, reservas, tokens de dispositivo y recuperación de contraseña. Documentada en /docs (Swagger). Desplegada en Render.")
+  Container(notifier, "Notificador", "Tarea asyncio (notifier.py)", "Corre dentro del proceso de la API (lifespan). Cada 60 s busca reservas que empiezan dentro de la próxima hora.")
+  ContainerDb(db, "Base de datos", "PostgreSQL (Render)", "Usuarios, sedes, canchas, reservas, tokens de dispositivo y códigos de recuperación.")
+}
+
+System_Ext(google, "Google Identity", "Inicio de sesión con cuenta de Google.")
+System_Ext(firebaseAuth, "Firebase Authentication", "Cuentas de usuario, tokens de ID y cambio de contraseña.")
+System_Ext(fcm, "Firebase Cloud Messaging", "Entrega de notificaciones push.")
+System_Ext(brevo, "Brevo", "Envío de emails transaccionales.")
+
+Rel(socio, app, "Usa")
+Rel(app, google, "Solicita el token de ID de Google", "Credential Manager")
+Rel(app, firebaseAuth, "Inicia sesión y obtiene el token de ID", "Firebase SDK")
+Rel(app, api, "Llama a la API", "HTTPS/JSON, Bearer token")
+Rel(api, firebaseAuth, "Verifica tokens y cambia contraseñas", "Admin SDK")
+Rel(api, db, "Lee y escribe", "SQLAlchemy/SQL")
+Rel(api, fcm, "Envía el aviso si la reserva empieza dentro de la hora", "Admin SDK")
+Rel(api, brevo, "Envía códigos de recuperación", "HTTPS/JSON")
+Rel(notifier, db, "Busca reservas próximas y marca notified_at", "SQLAlchemy/SQL")
+Rel(notifier, fcm, "Envía recordatorios", "Admin SDK")
+Rel(fcm, app, "Entrega notificaciones push")
+Rel(brevo, socio, "Entrega el código de recuperación", "Email")
+
+SHOW_LEGEND()
+@enduml
