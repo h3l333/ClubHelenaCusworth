@@ -155,14 +155,8 @@ class _SedeScreenState extends State<SedeScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  widget.sede.address,
-                  style: TextStyle(color: Colors.grey[300], fontSize: 13),
-                ),
-                Text(
-                  'Abierto de ${widget.sede.horarioLabel}',
-                  style: TextStyle(color: Colors.grey[300], fontSize: 13),
-                ),
+                _OutlinedText(widget.sede.address),
+                _OutlinedText('Abierto de ${widget.sede.horarioLabel}'),
               ],
             ),
           ),
@@ -238,6 +232,40 @@ class _SedeScreenState extends State<SedeScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+// Texto oscuro con contorno blanco: un trazo blanco debajo y el relleno encima.
+class _OutlinedText extends StatelessWidget {
+  final String text;
+
+  const _OutlinedText(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3
+              ..color = Colors.white,
+          ),
+        ),
+        Text(
+          text,
+          style: TextStyle(
+            color: Colors.grey[900],
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
