@@ -1,5 +1,5 @@
 @startuml
-title Create reservation
+title UC16 - Create reservation
 
 actor User
 participant "widgets/cancha_card.dart\n(CanchaCard)" as CC
@@ -14,18 +14,7 @@ participant "backend\n(notifier.py)" as NOT
 participant "Firebase Cloud Messaging" as FCM
 
 == Check availability ==
-User -> CC : taps book
-CC -> BS : showBookingSheet(cancha, sede)
-BS -> BS : _selectDay(today)
-BS -> API : getDisponibilidad(canchaId, fecha)
-API -> SEDES : GET /canchas/{id}/disponibilidad?fecha=\nAuthorization: Bearer <token>
-SEDES -> DEPS : get_firebase_claims (verify_id_token)
-SEDES -> DB : SELECT confirmed reservas\nfor cancha + fecha
-DB --> SEDES : hora_inicio, hora_fin
-SEDES -> SEDES : one slot per hour of the sede's opening hours\ndisponible = not taken and in the future
-SEDES --> API : 200 DisponibilidadOut
-API --> BS : List<Slot>
-BS -> User : shows slots
+ref over User, CC, BS, API, SEDES : UC15 - consultar_disponibilidad.puml\n(BookingSheet open with the slots of the selected day)
 
 == Pick range ==
 User -> BS : taps slots
@@ -78,8 +67,5 @@ else ApiException
 end
 
 == Immediate reminder (only if is_due) ==
-NOT -> DB : UPDATE reserva SET notified_at\nWHERE notified_at IS NULL (claim)
-NOT -> DB : SELECT device tokens of the user
-NOT -> FCM : send_push("Reserva proxima")
-FCM -> User : push notification
+ref over NOT, FCM : UC21 - notificar_reserva.puml (notify_reserva)
 @enduml

@@ -1,0 +1,51 @@
+@startuml
+title UC21 - Reservation reminder notification
+
+actor User
+participant "backend\n(main.py)" as MAIN
+participant "backend\n(notifier.py)" as NOT
+participant "backend\n(routers/reservas.py)" as RES
+database "Postgres" as DB
+participant "backend\n(firebase.py)" as FB
+participant "Firebase Cloud Messaging" as FCM
+
+note over User : The user's device tokens are registered in\nUC20 - registrar_dispositivo.puml and removed in UC8 - cerrar_sesion.puml
+
+== Background loop (every 60 s) ==
+MAIN -> NOT : lifespan: create_task(run_forever())
+loop every INTERVAL_SECONDS = 60
+  NOT -> NOT : notify_upcoming()\nnow = club_now_naive()
+  NOT -> DB : SELECT reservas WHERE estado = 'confirmada'\nAND notified_at IS NULL\nAND fecha BETWEEN today AND today + 1h
+  DB --> NOT : pending reservas
+  loop each reserva where is_due (now < inicio <= now + 1h)
+    NOT -> NOT : notify_reserva(id)
+  end
+  opt exception
+    NOT -> NOT : log.exception("notifier failed"), keep looping
+  end
+end
+
+== Immediate reminder (reserva created within the next hour) ==
+RES -> RES : POST /reservas commits reserva (UC16 - crear_reserva.puml)
+opt is_due(reserva, now)
+  RES -> NOT : background task notify_reserva(id)
+end
+
+== notify_reserva(id) ==
+NOT -> DB : UPDATE reserva SET notified_at = now()\nWHERE id = :id AND notified_at IS NULL
+alt rowcount = 0 (already claimed)
+  NOT -> NOT : return
+else claimed
+  NOT -> DB : SELECT device_tokens.token WHERE user_id = reserva.user_id
+  DB --> NOT : tokens
+  opt tokens not empty
+    NOT -> FB : send_push(tokens, "Reserva proxima",\n"<cancha> de HH:MM a HH:MM")
+    FB -> FCM : send_each_for_multicast(MulticastMessage)
+    alt send fails
+      NOT -> DB : notified_at = NULL (retry next cycle)
+    else sent
+      FCM -> User : push notification
+    end
+  end
+end
+@enduml

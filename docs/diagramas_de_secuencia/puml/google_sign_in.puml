@@ -1,0 +1,37 @@
+@startuml
+title UC3 - Google sign-in
+
+actor User
+participant "login_screen.dart\n(LoginScreen)" as LS
+participant "login/google_auth.dart\n(GoogleAuthService)" as GA
+participant "google_sign_in plugin\n(Android Credential Manager)" as GSI
+participant "Google Identity" as GOOGLE
+participant "FirebaseAuth SDK" as FA
+participant "Firebase Auth\n(servidor)" as FAS
+participant "main.dart\n(AuthGate / ProfileGate)" as GATE
+
+== Init ==
+LS -> GA : init()
+GA -> GSI : initialize(serverClientId = Web client ID)
+
+== Sign in ==
+User -> LS : taps "Continuar con Google"
+LS -> GA : signIn()
+GA -> LS : onBusy(true)
+GA -> GSI : authenticate()
+GSI -> GOOGLE : account picker + consent\n(checks package name + SHA-1)
+GOOGLE --> GSI : Google idToken
+GSI --> GA : account (idToken)
+GA -> FA : signInWithCredential(GoogleAuthProvider.credential(idToken))
+FA -> FAS : exchange Google idToken
+FAS --> FA : Firebase user + Firebase ID token
+FA --> GA : UserCredential
+GA -> LS : onBusy(false)
+
+alt GoogleSignInException / FirebaseAuthException
+  GA -> LS : onError(message)
+else ok
+  FA -> GATE : authStateChanges() emits User
+  ref over GATE : UC5 - ver_home.puml\n(first Google sign-in has no profile -> UC4 - completar_perfil.puml)
+end
+@enduml

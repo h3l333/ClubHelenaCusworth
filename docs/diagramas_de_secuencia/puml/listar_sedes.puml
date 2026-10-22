@@ -1,0 +1,33 @@
+@startuml
+title UC12 - List sedes with their opening hours
+
+actor User
+participant "home_screen.dart\n(HomeScreen)" as HS
+participant "sedes_screen.dart\n(SedesScreen)" as SS
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/sedes.py)" as BE
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+
+User -> HS : taps "Sedes" (bottom bar)
+HS -> SS : _goToTab(1) -> shows SedesScreen
+SS -> API : initState(): getSedes()
+API -> BE : GET /sedes\nAuthorization: Bearer <token>
+BE -> ADMIN : verify_id_token(token)\n(router dependency get_firebase_claims)
+BE -> DB : SELECT sedes ORDER BY id\n+ selectinload canchas (for sports)
+DB --> BE : sedes
+BE --> API : 200 list[SedeOut]\n(name, localidad, address, hora_apertura, hora_cierre, sports)
+API --> SS : List<Sede>
+
+alt ok
+  SS -> User : one _SedeCard per sede\n(name, address, opening hours)
+else error (no connection, server down, timeout)
+  SS -> User : ErrorRetry (onRetry -> _reload())
+end
+
+opt taps a sede
+  User -> SS : taps _SedeCard
+  SS -> SS : Navigator.push(SedeScreen(sede))
+  ref over SS : UC13 - ver_sede.puml
+end
+@enduml

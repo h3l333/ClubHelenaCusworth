@@ -1,0 +1,40 @@
+@startuml
+title UC2 - Email/password sign-in
+
+actor User
+participant "login/login_form.dart\n(LoginForm)" as LF
+participant "login_screen.dart\n(LoginScreen)" as LS
+participant "login/auth_actions.dart\n(signInWithEmail / _guard)" as AA
+participant "FirebaseAuth SDK" as FA
+participant "Firebase Auth\n(servidor)" as FAS
+participant "main.dart\n(AuthGate / ProfileGate)" as GATE
+
+User -> LF : enters email + password,\ntaps "Iniciar sesión"
+LF -> LS : onSubmit()
+LS -> LS : _submit()\nformKey.validate()
+
+alt invalid form
+  LS -> LF : shows field errors
+else valid form
+  LS -> LS : _setBusy(true)
+  LS -> AA : signInWithEmail(email, password)
+  AA -> FA : signInWithEmailAndPassword(email, password)
+  FA -> FAS : verify credentials
+
+  alt valid credentials
+    FAS --> FA : Firebase user + Firebase ID token
+    FA --> AA : UserCredential
+    AA --> LS : null (success)
+    FA -> GATE : authStateChanges() emits User
+    ref over GATE : UC5 - ver_home.puml
+  else FirebaseAuthException
+    FAS --> FA : error code
+    FA --> AA : FirebaseAuthException
+    AA -> AA : translateAuthError(e)\n(wrong credentials, no connection, too many attempts...)
+    AA --> LS : error message
+    LS -> LS : _showError(message)
+  end
+
+  LS -> LS : _setBusy(false)
+end
+@enduml

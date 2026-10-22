@@ -1,0 +1,60 @@
+@startuml
+title UC20 - Register the device for push notifications
+
+actor User
+participant "home_screen.dart\n(HomeScreen)" as HS
+participant "services/push_service.dart\n(PushService)" as PS
+participant "firebase_messaging plugin" as FM
+participant "Firebase Cloud Messaging" as FCM
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/device_tokens.py)" as DT
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+
+note over HS : HomeScreen.initState() after sign-in (UC5 - ver_home.puml).\nIf init() fails, the error is only logged: the app works without push.
+
+HS -> PS : init()
+PS -> FM : requestPermission()
+FM -> User : OS notification permission dialog
+User --> FM : allow / deny
+FM --> PS : NotificationSettings
+
+alt authorizationStatus = denied
+  PS -> PS : return (no push on this device)
+else granted
+  PS -> FM : getToken()
+  FM -> FCM : get registration token
+  FCM --> FM : token
+  FM --> PS : token
+  alt token == null
+    PS -> PS : return
+  else
+    PS -> PS : _token = token
+    PS -> API : registerDeviceToken(token)
+    API -> DT : POST /device-tokens {token}\nAuthorization: Bearer <token>
+    DT -> ADMIN : verify_id_token(token)
+    DT -> DB : SELECT user (get_current_user)
+    DT -> DB : SELECT device_token WHERE token
+    alt not found
+      DT -> DB : INSERT device_token (user_id, token)
+    else owned by another user
+      DT -> DB : UPDATE user_id (device switched accounts)
+    else already registered for this user
+      DT -> DT : nothing to change
+    end
+    DT -> DB : COMMIT
+    DT --> API : 204
+
+    opt first init in this session
+      PS -> FM : listen onTokenRefresh
+    end
+    ...later...
+    opt FCM rotates the token
+      FM -> PS : onTokenRefresh(newToken)
+      PS -> PS : _token = newToken
+      PS -> API : registerDeviceToken(newToken)
+      API -> DT : POST /device-tokens (same steps)
+    end
+  end
+end
+@enduml

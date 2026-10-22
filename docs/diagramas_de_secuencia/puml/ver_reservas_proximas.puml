@@ -1,0 +1,43 @@
+@startuml
+title UC17 - View upcoming reservas
+
+actor User
+participant "home_screen.dart\n(HomeScreen)" as HS
+participant "reservas_screen.dart\n(ReservasScreen)" as RS
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/reservas.py)" as BE
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+participant "reserva.dart\n(Reserva)" as R
+
+alt bottom bar
+  User -> HS : taps "Reservas"
+else avatar menu
+  User -> HS : taps avatar, then "Mis Reservas"
+end
+HS -> RS : _goToTab(3) -> shows ReservasScreen
+RS -> API : initState(): _load() -> getReservas()
+API -> BE : GET /reservas/me\nAuthorization: Bearer <token>
+BE -> ADMIN : verify_id_token(token)
+BE -> DB : SELECT user WHERE firebase_uid (get_current_user)
+BE -> DB : SELECT reservas WHERE user_id\n+ joinedload cancha, sede\nORDER BY fecha, hora_inicio
+BE --> API : 200 list[ReservaOut]\n(cancha, sede, fecha, hora_inicio, hora_fin, price, estado)
+API --> RS : List<Reserva>
+
+alt error
+  RS -> User : ErrorRetry (onRetry -> _reload())
+else ok
+  RS -> R : estadoActual for each reserva\n(estado + startsAt/endsAt vs now)
+  RS -> RS : proximas = isActive or isEnCurso
+  RS -> User : tab "Próximas (N)" selected (_selectedTab = 0)\none card per reserva: sede, cancha, date, time, estado\n"Cancelar" button only if isActive
+end
+
+opt cancel
+  User -> RS : taps "Cancelar"
+  ref over RS : UC19 - cancelar_reserva.puml
+end
+opt history
+  User -> RS : taps "Historial"
+  ref over RS : UC18 - ver_historial_reservas.puml
+end
+@enduml

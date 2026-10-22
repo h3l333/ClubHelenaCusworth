@@ -1,0 +1,42 @@
+@startuml
+title UC13 - View a sede and its canchas
+
+actor User
+participant "sede_screen.dart\n(SedeScreen)" as SDS
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/sedes.py)" as BE
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+participant "widgets/cancha_card.dart\n(CanchaCard)" as CC
+
+note over SDS : Opened from UC12 - listar_sedes.puml (or a sede on the Home Page)
+
+SDS -> API : initState(): getSede(sede.id)
+API -> BE : GET /sedes/{id}\nAuthorization: Bearer <token>
+BE -> ADMIN : verify_id_token(token)
+BE -> DB : SELECT sede WHERE id + selectinload canchas
+
+alt sede not found
+  BE --> API : 404 Sede no encontrada
+  API --> SDS : ApiException
+  SDS -> User : ErrorRetry
+else ok
+  BE --> API : 200 SedeDetail (sede + canchas)
+  API --> SDS : Sede
+  SDS -> User : header (name, address, "Abierto de X a Y")\nsport chips (Todos + sports of the sede)\none CanchaCard per cancha
+end
+
+opt filter
+  User -> SDS : taps a sport chip
+  SDS -> SDS : setState(_selectedSport)\nfilters sede.canchas locally
+  opt sport = Futbol
+    User -> SDS : taps a Futbol type
+    SDS -> SDS : setState(_selectedFutbolType)\nfilters by cancha.subtype
+  end
+end
+
+opt book
+  User -> CC : taps "VER HORARIOS / RESERVAR"
+  ref over CC : UC15 - consultar_disponibilidad.puml
+end
+@enduml

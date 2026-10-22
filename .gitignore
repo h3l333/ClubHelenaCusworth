@@ -8,6 +8,7 @@ NOTAS.md
 tp_2026_consigna.txt
 .claude
 .vscode/*
+docs/diagramas_de_secuencia/png
 
 # IntelliJ related
 *.iml

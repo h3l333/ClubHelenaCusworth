@@ -1,0 +1,49 @@
+@startuml
+title UC19 - Cancel a reserva
+
+actor User
+participant "reservas_screen.dart\n(ReservasScreen)" as RS
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/reservas.py)" as BE
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+
+note over RS : Starts from the "Próximas" tab (UC17 - ver_reservas_proximas.puml).\n"Cancelar" only appears on reservas that have not started (isActive).
+
+User -> RS : taps "Cancelar" on a reserva
+RS -> RS : _cancel(reserva)
+RS -> User : AlertDialog "¿Querés cancelar <cancha> el <fecha> de X a Y?"
+
+alt "Volver"
+  User -> RS : back
+else "Cancelar reserva"
+  User -> RS : confirm
+  RS -> API : cancelReserva(id)
+  API -> BE : DELETE /reservas/{id}\nAuthorization: Bearer <token>
+  BE -> ADMIN : verify_id_token(token)
+  BE -> DB : SELECT user (get_current_user)
+  BE -> DB : SELECT reserva WHERE id + cancha, sede
+
+  alt not found or belongs to another user
+    BE --> API : 404 Reserva no encontrada
+  else estado != 'confirmada'
+    BE --> API : 409 La reserva ya no esta activa
+  else already started (inicio <= club_now)
+    BE --> API : 409 No se puede cancelar una reserva pasada
+  else ok
+    BE -> DB : UPDATE reserva SET estado = 'cancelada', COMMIT
+    note right of DB : The slot is free again: availability\nonly counts estado = 'confirmada' (UC15)\nand the notifier skips it (UC21)
+    BE --> API : 200 ReservaOut (estado cancelada)
+  end
+
+  alt 200
+    API --> RS : Reserva (cancelada)
+    RS -> RS : replaces it in _reservas\n(leaves Próximas, goes to Historial)
+    RS -> User : showSnack("Reserva cancelada")
+  else error
+    API --> RS : ApiException
+    RS -> User : showSnack(describeError(e))
+    RS -> RS : _reload() (resync with the backend)
+  end
+end
+@enduml

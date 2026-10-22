@@ -1,0 +1,60 @@
+@startuml
+title UC6 - Request password reset code
+
+actor User
+participant "login/forgot_password_form.dart\n(ForgotPasswordForm)" as FPF
+participant "login_screen.dart\n(LoginScreen)" as LS
+participant "login/auth_actions.dart\n(requestResetCode / _guard)" as AA
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/password_reset.py)" as BE
+participant "backend\n(firebase.py)" as FB
+database "Postgres" as DB
+participant "backend\n(mailer.py)" as MAIL
+participant "Brevo API" as BREVO
+
+User -> LS : taps "¿Olvidaste tu contraseña?" (LoginForm)
+LS -> LS : _goTo(AuthStage.forgotPassword)
+User -> FPF : enters email, taps send
+FPF -> LS : onSubmit()
+LS -> LS : _sendReset()\n_forgotFormKey.validate()
+
+alt invalid email
+  LS -> FPF : shows field error
+else valid
+  LS -> AA : requestResetCode(email)
+  AA -> API : requestPasswordReset(email.trim())
+  API -> BE : POST /auth/password-reset/request\n(no auth required)
+  BE -> FB : get_uid_by_email(email)
+
+  alt Firebase not configured
+    BE --> API : 503 Auth no configurado
+  else no account with that email
+    BE --> API : 204 (same response, does not reveal accounts)
+  else account exists
+    BE -> DB : SELECT latest unused code for email
+    alt within reset_resend_cooldown_seconds
+      BE --> API : 204 (no new code)
+    else
+      BE -> BE : code = random 6 digits
+      BE -> DB : DELETE previous codes for email
+      BE -> DB : INSERT password_reset_code\n(code_hash = sha256(email:code), expires_at)
+      BE -> DB : COMMIT
+      BE -> MAIL : background task send_reset_code(email, code)
+      BE --> API : 204
+      MAIL -> BREVO : POST /v3/smtp/email
+      BREVO -> User : email with the code
+    end
+  end
+
+  alt 204
+    API --> AA : ok
+    AA --> LS : null
+    LS -> LS : _goTo(AuthStage.resetCode)
+    ref over LS : UC7 - confirmar_codigo_recuperacion.puml
+  else error
+    API --> AA : ApiException
+    AA --> LS : error message
+    LS -> FPF : _showError(message)
+  end
+end
+@enduml

@@ -1,0 +1,56 @@
+@startuml
+title UC7 - Confirm reset code and set a new password
+
+actor User
+participant "login/reset_code_form.dart\n(ResetCodeForm)" as RCF
+participant "login_screen.dart\n(LoginScreen)" as LS
+participant "login/auth_actions.dart\n(confirmResetCode / _guard)" as AA
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/password_reset.py)" as BE
+database "Postgres" as DB
+participant "backend\n(firebase.py)" as FB
+participant "Firebase Auth\n(servidor)" as FAS
+
+note over LS : Reached after UC6 - solicitar_codigo_recuperacion.puml
+
+User -> RCF : enters code + new password, taps confirm
+RCF -> LS : onSubmit()
+LS -> LS : _confirmReset()\n_resetFormKey.validate()
+
+alt invalid form
+  LS -> RCF : shows field errors
+else valid
+  LS -> AA : confirmResetCode(email, code, newPassword)
+  AA -> API : confirmPasswordReset(...)
+  API -> BE : POST /auth/password-reset/confirm\n(no auth required)
+  BE -> DB : SELECT latest unused code for email
+
+  alt no code, expired or attempts >= reset_max_attempts
+    BE --> API : 400 Codigo invalido o vencido.
+  else
+    BE -> DB : attempts += 1, COMMIT
+    BE -> BE : hmac.compare_digest(code_hash, sha256(email:code))
+    alt wrong code
+      BE --> API : 400 Codigo invalido o vencido.
+    else right code
+      BE -> FB : get_uid_by_email(email)
+      BE -> FB : set_password(uid, new_password)
+      FB -> FAS : update_user(password)
+      FB -> FAS : revoke_refresh_tokens(uid)
+      BE -> DB : used_at = now, COMMIT
+      BE --> API : 204
+    end
+  end
+
+  alt 204
+    API --> AA : ok
+    AA --> LS : null
+    LS -> LS : clears code and password\n_goTo(AuthStage.login)
+    LS -> User : login form (sign in with new password, UC2)
+  else error
+    API --> AA : ApiException
+    AA --> LS : error message
+    LS -> RCF : _showError(message)
+  end
+end
+@enduml

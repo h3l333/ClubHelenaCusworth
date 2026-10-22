@@ -1,0 +1,24 @@
+@startuml
+title UC9 - View profile
+
+actor User
+participant "home_screen.dart\n(HomeScreen)" as HS
+participant "perfil_edit.dart\n(PerfilEdit)" as PE
+participant "services/profile_store.dart\n(ProfileStore)" as PS
+participant "FirebaseAuth SDK" as FA
+
+note over PS : The profile is already in memory: it was loaded with\nGET /users/me when entering the app (UC5 - ver_home.puml).\nViewing it makes no request to the backend.
+
+alt bottom bar
+  User -> HS : taps "Perfil"
+  HS -> HS : _goToTab(4)
+else avatar menu
+  User -> HS : taps avatar, then "Perfil completo"
+  HS -> HS : _goToTab(4)
+end
+HS -> PE : shows PerfilEdit
+PE -> PS : profile (firstName, lastName, dni, birthDate)
+PE -> FA : currentUser.email (falls back to profile.email)
+PE -> PE : _fillFromProfile()\nformatDni(), formatDate()
+PE -> User : header (initials, full name, email)\nDATOS PERSONALES in read-only fields\nEMAIL marked "solo lectura"
+@enduml

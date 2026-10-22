@@ -1,0 +1,33 @@
+@startuml
+title UC8 - Sign out
+
+actor User
+participant "perfil_edit.dart\n(PerfilEdit)" as PE
+participant "services/push_service.dart\n(PushService)" as PUSH
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/device_tokens.py)" as DT
+database "Postgres" as DB
+participant "FirebaseAuth SDK" as FA
+participant "main.dart\n(AuthGate / ProfileGate)" as GATE
+participant "services/profile_store.dart\n(ProfileStore)" as PS
+
+User -> PE : taps "Cerrar sesión"\n(Perfil tab, or the avatar menu in home_screen.dart: same steps)
+PE -> PE : _cerrarSesion()
+PE -> PUSH : dispose() (before signOut: DELETE needs the session)
+PUSH -> PUSH : cancel onTokenRefresh subscription
+opt token registered
+  PUSH -> API : deleteDeviceToken(token)
+  API -> DT : DELETE /device-tokens\nAuthorization: Bearer <token>
+  DT -> DB : DELETE device_token\nWHERE token AND user_id
+  DT --> API : 204
+  alt no connection / session expired
+    API --> PUSH : exception (ignored, does not block sign-out)
+  end
+end
+PE -> FA : signOut()
+FA -> GATE : authStateChanges() emits null
+GATE -> PS : ProfileGate.dispose() -> clear()
+GATE -> User : shows LoginScreen
+
+note over GATE : CompleteProfileScreen and the ProfileGate error view\nalso have "Cerrar sesión"; those call signOut() directly\n(no device token registered yet)
+@enduml

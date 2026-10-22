@@ -1,0 +1,27 @@
+@startuml
+title UC18 - View reserva history
+
+actor User
+participant "reservas_screen.dart\n(ReservasScreen)" as RS
+participant "reserva.dart\n(Reserva)" as R
+
+note over RS : The list was already loaded with GET /reservas/me\nwhen opening the screen (UC17 - ver_reservas_proximas.puml).\nSwitching tabs or filters makes no request to the backend.
+
+User -> RS : taps "Historial"
+RS -> RS : setState(_selectedTab = 1)
+RS -> R : estadoActual for each reserva
+RS -> RS : historial = isFinalizada or isCancelada\nreversed (most recent first)
+RS -> RS : counts: total, finalizadas, canceladas
+RS -> User : filter chips "Todas (N)", "Finalizadas (N)", "Canceladas (N)"\none card per reserva: sede, cancha, date, time, estado
+
+opt filter by status
+  User -> RS : taps a chip
+  RS -> RS : setState(_historialFiltro = finalizada / cancelada / null)
+  RS -> RS : historial where estadoActual == _historialFiltro
+  alt no matches
+    RS -> User : empty message (e.g. "No tenés reservas en el historial.")
+  else
+    RS -> User : filtered list
+  end
+end
+@enduml

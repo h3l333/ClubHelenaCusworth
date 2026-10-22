@@ -1,0 +1,45 @@
+@startuml
+title UC11 - Delete account
+
+actor User
+participant "perfil_edit.dart\n(PerfilEdit)" as PE
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/users.py)" as BE
+participant "backend\n(firebase.py)" as FB
+database "Postgres" as DB
+participant "Firebase Auth\n(servidor)" as FAS
+participant "FirebaseAuth SDK" as FA
+participant "main.dart\n(AuthGate)" as GATE
+
+User -> PE : taps "Eliminar cuenta" (ZONA DE PELIGRO)
+PE -> User : AlertDialog "Esta acción es permanente..."
+alt "Cancelar"
+  User -> PE : cancel
+  PE -> PE : return
+else "Eliminar"
+  User -> PE : confirm
+  PE -> API : deleteMe()
+  API -> BE : DELETE /users/me\nAuthorization: Bearer <token>
+  BE -> FB : verify_id_token(token) (get_firebase_claims)
+  BE -> DB : SELECT user WHERE firebase_uid = uid
+  opt profile exists
+    BE -> DB : DELETE reservas WHERE user_id
+    BE -> DB : DELETE user\n(device_tokens removed by ON DELETE CASCADE)
+    BE -> DB : COMMIT
+  end
+  BE -> FB : delete_user(uid)
+  FB -> FAS : delete Firebase account
+
+  alt Firebase delete fails
+    BE --> API : 502 No se pudo eliminar la cuenta de autenticacion
+    API --> PE : ApiException
+    PE -> User : showSnack(describeError(e))
+  else ok
+    BE --> API : 204 (idempotent: safe to retry)
+    API --> PE : ok
+    PE -> FA : signOut()
+    FA -> GATE : authStateChanges() emits null
+    GATE -> User : shows LoginScreen
+  end
+end
+@enduml

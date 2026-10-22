@@ -1,0 +1,51 @@
+@startuml
+title UC15 - Check a cancha's availability for a date
+
+actor User
+participant "widgets/cancha_card.dart\n(CanchaCard)" as CC
+participant "booking_sheet.dart\n(_BookingSheet)" as BS
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/sedes.py)" as SEDES
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+
+note over CC : CanchaCard is shown in UC13 - ver_sede.puml\nand UC14 - listar_canchas.puml
+
+User -> CC : taps "VER HORARIOS / RESERVAR"
+CC -> BS : showBookingSheet(cancha, sede)
+BS -> BS : _dias = today .. today + 13 (_diasVisibles = 14)
+BS -> BS : _selectDay(today)
+
+loop each time the user picks a day
+  BS -> API : getDisponibilidad(canchaId, fecha)
+  API -> SEDES : GET /canchas/{id}/disponibilidad?fecha=\nAuthorization: Bearer <token>
+  SEDES -> ADMIN : verify_id_token(token)
+  SEDES -> DB : SELECT cancha (with sede)
+  alt cancha not found
+    SEDES --> API : 404 Cancha no encontrada
+  else ok
+    SEDES -> DB : SELECT hora_inicio, hora_fin FROM reservas\nWHERE cancha_id, fecha, estado = 'confirmada'
+    DB --> SEDES : reservas
+    SEDES -> SEDES : taken = every hour between inicio and fin
+    SEDES -> SEDES : one slot per hour from hora_apertura to hora_cierre - 1\ndisponible = not taken and in the future (club_now)
+    SEDES --> API : 200 DisponibilidadOut(fecha, slots)
+  end
+
+  alt 200
+    API --> BS : List<Slot>
+    BS -> User : slot grid (free / taken)
+  else error
+    API --> BS : ApiException
+    BS -> User : ErrorRetry (onRetry -> _selectDay(_fecha))
+  end
+
+  opt picks another day
+    User -> BS : taps a day
+    BS -> BS : _selectDay(dia)
+  end
+end
+
+opt picks a range and confirms
+  ref over BS : UC16 - crear_reserva.puml
+end
+@enduml

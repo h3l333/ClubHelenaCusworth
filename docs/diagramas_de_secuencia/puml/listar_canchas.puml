@@ -1,0 +1,40 @@
+@startuml
+title UC14 - List canchas with their sede and filter by sport
+
+actor User
+participant "home_screen.dart\n(HomeScreen)" as HS
+participant "canchas_screen.dart\n(CanchasScreen)" as CS
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/sedes.py)" as BE
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+participant "widgets/cancha_card.dart\n(CanchaCard)" as CC
+
+User -> HS : taps "Canchas" (bottom bar)
+HS -> CS : _goToTab(2) -> shows CanchasScreen
+CS -> API : initState(): getCanchas()
+API -> BE : GET /canchas\nAuthorization: Bearer <token>
+BE -> ADMIN : verify_id_token(token)
+BE -> DB : SELECT canchas + joinedload sede\nORDER BY sport, name
+note right of BE : The endpoint also accepts ?sport=,\nbut the app filters on the client
+BE --> API : 200 list[CanchaConSedeOut]
+API --> CS : List<(cancha, sede)>
+
+alt ok
+  CS -> CS : sports = Todos + distinct cancha.sport
+  CS -> User : sport chips + one CanchaCard per cancha\n(name, type, price, sede)
+else error
+  CS -> User : ErrorRetry (onRetry -> _reload())
+end
+
+opt filter by sport
+  User -> CS : taps a sport chip
+  CS -> CS : setState(_selectedSport)\nfilters where cancha.sport == sport
+  CS -> User : filtered list
+end
+
+opt book
+  User -> CC : taps "VER HORARIOS / RESERVAR"
+  ref over CC : UC15 - consultar_disponibilidad.puml
+end
+@enduml

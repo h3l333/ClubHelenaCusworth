@@ -1,0 +1,70 @@
+@startuml
+title UC5 - View Home Page after sign-in
+
+actor User
+participant "FirebaseAuth SDK" as FA
+participant "main.dart\n(AuthGate / ProfileGate)" as GATE
+participant "services/profile_store.dart\n(ProfileStore)" as PS
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(deps.py / routers)" as BE
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+participant "complete_profile_screen.dart" as CPS
+participant "home_screen.dart\n(HomeScreen)" as HS
+participant "services/push_service.dart\n(PushService)" as PUSH
+
+note over FA : Triggered after UC2 (email_sign_in.puml),\nUC3 (google_sign_in.puml) or UC1 (registro_email.puml)
+
+== Routing ==
+FA -> GATE : authStateChanges() emits User
+alt ProfileStore.isRegistering
+  GATE -> GATE : keeps LoginScreen (UC1 in progress)
+else
+  GATE -> GATE : shows ProfileGate
+end
+
+opt status = idle
+  GATE -> PS : load()
+  PS -> API : getMe()
+  API -> FA : currentUser.getIdToken()
+  FA --> API : Firebase ID token
+  API -> BE : GET /users/me\nAuthorization: Bearer <token>
+  BE -> ADMIN : verify_id_token(token)
+  ADMIN --> BE : claims (uid)
+  BE -> DB : SELECT user WHERE firebase_uid = uid
+
+  alt profile exists
+    BE --> API : 200 UserOut
+    API --> PS : UserProfile
+    PS -> GATE : status = ready
+  else no profile
+    BE --> API : 404 Perfil no encontrado
+    API --> PS : ApiException (isNotFound)
+    PS -> GATE : status = notFound
+    GATE -> CPS : shows CompleteProfileScreen
+    ref over CPS, PS : UC4 - completar_perfil.puml
+  else 401 (token expired)
+    API -> FA : getIdToken(forceRefresh: true)
+    API -> BE : retry once
+  else no connection / server down / timeout
+    API --> PS : ApiException(0, message)
+    PS -> GATE : status = error
+    GATE -> User : ErrorRetry (retry -> load())\nor "Cerrar sesión"
+  end
+end
+
+== Home ==
+GATE -> HS : status = ready -> shows HomeScreen
+HS -> PUSH : init() (failure only logged)
+ref over HS, PUSH : UC20 - registrar_dispositivo.puml
+HS -> API : Future.wait([getSedes(), getReservas()])
+API -> BE : GET /sedes
+API -> BE : GET /reservas/me\nAuthorization: Bearer <token>
+BE -> DB : SELECT sedes / reservas of the user
+BE --> API : 200 lists
+API --> HS : _HomeData(sedes, reservas)
+HS -> User : greeting, next reserva, sedes,\nnotifications (up to 3 active reservas)
+alt load error
+  HS -> User : ErrorRetry (onRetry -> _reload())
+end
+@enduml

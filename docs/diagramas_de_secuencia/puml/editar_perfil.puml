@@ -1,0 +1,48 @@
+@startuml
+title UC10 - Edit profile
+
+actor User
+participant "perfil_edit.dart\n(PerfilEdit)" as PE
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/users.py)" as BE
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+participant "services/profile_store.dart\n(ProfileStore)" as PS
+
+note over PE : Starts from UC9 - ver_perfil.puml
+
+User -> PE : taps "Editar"
+PE -> PE : _toggleEditing()\n_editing = true (fields editable, EMAIL stays read-only)
+User -> PE : changes name, last name, DNI and/or birth date
+User -> PE : taps "Guardar"
+PE -> PE : _toggleEditing()\nrequired name/last name, validateDni, validateBirthDate
+
+alt validation error
+  PE -> User : showSnack(error)
+else valid
+  PE -> PE : _saving = true
+  PE -> API : updateMe(firstName, lastName, birthDate, dni)
+  API -> BE : PATCH /users/me\nAuthorization: Bearer <token>
+  BE -> ADMIN : verify_id_token(token)
+  BE -> DB : SELECT user WHERE firebase_uid = uid (get_current_user)
+  BE -> DB : SELECT user WHERE dni = new dni AND id != user.id
+
+  alt DNI used by another user
+    BE --> API : 409 El DNI ya esta registrado
+  else ok
+    BE -> DB : UPDATE user (only the fields sent), COMMIT
+    BE --> API : 200 UserOut
+  end
+
+  alt 200
+    API --> PE : UserProfile
+    PE -> PS : setProfile(updated)
+    PE -> PE : _fillFromProfile(), _editing = false
+    PE -> User : showSnack("Perfil actualizado")
+  else error (409, 422, no connection)
+    API --> PE : ApiException
+    PE -> User : showSnack(describeError(e))
+  end
+  PE -> PE : _saving = false
+end
+@enduml

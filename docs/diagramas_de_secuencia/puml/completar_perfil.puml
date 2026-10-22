@@ -1,0 +1,50 @@
+@startuml
+title UC4 - Complete profile
+
+actor User
+participant "complete_profile_screen.dart\n(CompleteProfileScreen)" as CPS
+participant "FirebaseAuth SDK" as FA
+participant "services/api_client.dart\n(ApiClient)" as API
+participant "backend\n(routers/users.py)" as BE
+participant "Firebase Admin SDK" as ADMIN
+database "Postgres" as DB
+participant "services/profile_store.dart\n(ProfileStore)" as PS
+participant "main.dart\n(ProfileGate)" as GATE
+
+note over CPS : Shown by ProfileGate when GET /users/me returns 404\n(authenticated in Firebase, no profile yet; e.g. first Google sign-in).\nSee UC5 - ver_home.puml
+
+CPS -> FA : currentUser.displayName
+CPS -> CPS : initState(): prefill name / last name
+
+User -> CPS : fills in birth date, DNI\ntaps "Guardar"
+CPS -> CPS : _submit()\n_formKey.validate()
+
+alt invalid form
+  CPS -> User : shows field errors
+else valid form
+  CPS -> API : createUser(firstName, lastName, birthDate, dni)
+  API -> BE : POST /users\nAuthorization: Bearer <token>
+  BE -> ADMIN : verify_id_token(token)
+  ADMIN --> BE : claims (uid, email)
+  BE -> DB : SELECT user WHERE firebase_uid = uid
+  BE -> DB : SELECT user WHERE dni = body.dni
+  alt uid or DNI already registered
+    BE --> API : 409
+    API --> CPS : ApiException
+    CPS -> User : shows describeError(e)
+  else ok
+    BE -> DB : INSERT user, COMMIT
+    BE --> API : 201 UserOut
+    API --> CPS : UserProfile
+    CPS -> PS : setProfile(profile)\n(status = ready)
+    PS -> GATE : notifyListeners()
+    GATE -> GATE : shows HomeScreen
+    ref over GATE : UC5 - ver_home.puml
+  end
+end
+
+opt taps "Cerrar sesión"
+  User -> CPS : taps "Cerrar sesión"
+  CPS -> FA : signOut()
+end
+@enduml
