@@ -47,6 +47,10 @@ Cambios de esquema: editar `app/models.py` y agregar una migración en `alembic/
 | [app/mailer.py](app/mailer.py)         | Envío del código de recuperación por Brevo.                                                           |
 | [alembic/versions/](alembic/versions/) | Migraciones y datos iniciales.                                                                        |
 
+## Autenticación
+
+- Solo se verifica el ID token de Firebase (`Authorization: Bearer`). No se usa Firebase App Check, por lo que la API no comprueba que la solicitud provenga de la app.
+
 ## Variables de Entorno
 
 Definidas en [.env.example](.env.example). En local se leen de `backend/.env`; en Render, de la pestaña Environment del servicio.
