@@ -71,6 +71,10 @@ La primera solicitud puede tardar ~1 minuto, debido a que el servicio gratuito d
 
 El desarrollo comenzó en otro repositorio, con un historial de commits distinto y más antiguo. Este repositorio continúa ese trabajo.
 
+### Uso de IA
+
+Durante el desarrollo se utilizó Claude Code (Anthropic) como asistente de programación.
+
 ### Limitaciones del plan gratuito de Render
 
 El servicio gratuito se suspende tras un período de inactividad, lo que detiene el bucle `run_forever` de `notifier.py`. Los recordatorios de reservas hechas con más de una hora de anticipación no se envían si el servicio está dormido.  
