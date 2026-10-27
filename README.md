@@ -77,5 +77,7 @@ Durante el desarrollo se utilizó Claude Code (Anthropic) como asistente de prog
 
 ### Limitaciones del plan gratuito de Render
 
-El servicio gratuito se suspende tras un período de inactividad, lo que detiene el bucle `run_forever` de `notifier.py`. Los recordatorios de reservas hechas con más de una hora de anticipación no se envían si el servicio está dormido.  
-Las reservas que comienzan dentro de la próxima hora se notifican al instante, ya que el aviso se envía durante la misma solicitud de creación. En cambio, los recordatorios de reservas hechas con más de una hora de anticipación dependen del bucle `run_forever` y no se envían si el servicio está dormido en ese momento.
+El servicio gratuito se suspende tras un período de inactividad, lo que detiene el bucle `run_forever` de `notifier.py`.
+
+- Las reservas que comienzan dentro de la próxima hora se notifican al instante, ya que el aviso se envía durante la misma solicitud de creación.
+- Los recordatorios de reservas hechas con más de una hora de anticipación dependen de `run_forever` y no se envían si el servicio está dormido en ese momento.
